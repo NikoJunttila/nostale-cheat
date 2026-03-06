@@ -1,0 +1,18 @@
+---
+version: "3"
+
+tasks:
+  default:
+    desc: build dll
+    cmds:
+      - odin build ./simple-dll/ -target:windows_i386 -build-mode:dll -out:simple.dll
+
+  injector:
+    desc: build injector
+    cmds:
+      - odin build . -target:windows_i386 -out:injector.exe
+
+  clean:
+    desc: clean up
+    cmds:
+      - rm *.obj
