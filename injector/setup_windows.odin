@@ -1,21 +1,18 @@
 package injector
 
 import "core:fmt"
-import "core:os"
-import "core:path/filepath"
-import "core:time"
 
 setup_and_inject :: proc(proc_name, dll_path: string) -> bool {
-	if ok := os.exists(dll_path); !ok {
-		fmt.printfln("dll not found")
-		os.exit(1)
+	fmt.printfln("[INFO] Attempting to inject DLL '%s' into process '%s'", dll_path, proc_name)
+	if !windows_file_exists(dll_path) {
+		fmt.printf("[ERROR] DLL not found: %s\n", dll_path)
+		return false
 	}
-	fullPath, ok := filepath.abs(dll_path, context.temp_allocator)
+
+	fullPath, ok := windows_get_full_path(dll_path)
 	if !ok {
 		fmt.println("[ERROR] Error getting full path for dll")
 		return false
-	} else {
-		fmt.println("Full path: ", fullPath)
 	}
 
 	pids, found := find_all_processes_by_name(proc_name)
@@ -31,20 +28,12 @@ setup_and_inject :: proc(proc_name, dll_path: string) -> bool {
 			main_game := is_main_game_process(pid)
 			if main_game {
 				ok := inject_dll(pid, dll_path)
-				time.sleep(1 * time.Second)
-				port, portOK := find_listening_port_for_process(pid)
-				if portOK {
-					fmt.println("PID: ", pid)
-					fmt.println("PORT: ", port)
-				} else {
-					fmt.println("failed to find port. add timeout?")
-				}
-				if !ok do break
+				break
 			}
 		}
 	} else {
 		fmt.printf("[ERROR] Target process '%s' not found\n", proc_name)
-		os.exit(1)
+		return false
 	}
 	return true
 }

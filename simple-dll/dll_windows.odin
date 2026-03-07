@@ -1,7 +1,6 @@
 package payload
 import "core:fmt"
-import "core:log"
-import "core:os"
+import os "core:os/old"
 import win "core:sys/windows"
 import "core:time"
 
@@ -16,20 +15,18 @@ alert :: proc() {
 console_handle: win.HANDLE
 
 actual_main :: proc() {
-	logger := setup_logger()
-	context.logger = logger
-	log.info("starting payload main")
 	alert()
 	// Create a new console window
-	if win.AllocConsole() {
-		os.stdin = os.Handle(win.GetStdHandle(win.STD_INPUT_HANDLE))
-		os.stdout = os.Handle(win.GetStdHandle(win.STD_OUTPUT_HANDLE))
-		os.stderr = os.Handle(win.GetStdHandle(win.STD_ERROR_HANDLE))
-	} else {
-		fmt.eprintln("error creating console")
-		return
-	}
+	// if win.AllocConsole() {
+	// 	os.stdin = os.Handle(win.GetStdHandle(win.STD_INPUT_HANDLE))
+	// 	os.stdout = os.Handle(win.GetStdHandle(win.STD_OUTPUT_HANDLE))
+	// 	os.stderr = os.Handle(win.GetStdHandle(win.STD_ERROR_HANDLE))
+	// } else {
+	// 	fmt.eprintln("error creating console")
+	// 	return
+	// }
 	for {
+		fmt.println("loop inside payload")
 		time.sleep(1000 * time.Millisecond)
 	}
 }

@@ -4,11 +4,13 @@ import "core:fmt"
 import "core:log"
 
 main :: proc() {
+	fmt.println("[INFO] starting dll injection")
 	// Get process name and DLL path from command-line arguments or use defaults
 	process_name := "NostaleClientX.exe"
 	//find full path for dll
 	dll_path := "simple.dll" // Default DLL path
 	when ODIN_OS == .Windows {
+		fmt.println("[INFO] OS is windows")
 		ok := setup_and_inject(process_name, dll_path)
 		if !ok {
 			log.fatal("failed to inject")

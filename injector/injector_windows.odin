@@ -1,8 +1,6 @@
 package injector
 
 import "core:fmt"
-import "core:os"
-import "core:path/filepath"
 import "core:sys/windows"
 
 LPTHREAD_START_ROUTINE :: #type proc "stdcall" (parameter: rawptr) -> u32
@@ -28,18 +26,17 @@ inject_dll :: proc(pid: u32, dll_path: string, verbose: bool = false) -> bool {
 	}
 
 	// Validate DLL path exists before attempting injection
-	if !os.exists(dll_path) {
+	if !windows_file_exists(dll_path) {
 		fmt.printf("[ERROR] DLL file does not exist: '%s'\n", dll_path)
 		return false
 	}
 
-	fullPath, ok := filepath.abs(dll_path, context.temp_allocator)
+	fullPath, ok := windows_get_full_path(dll_path)
 	if !ok {
 		fmt.println("[ERROR] Error getting full path for dll")
 		return false
-	} else {
-		fmt.println("Full path: ", fullPath)
 	}
+	fmt.println("Full path: ", fullPath)
 
 	// Open the target process with required access rights
 	process_handle := windows.OpenProcess(
@@ -205,9 +202,13 @@ inject_dll :: proc(pid: u32, dll_path: string, verbose: bool = false) -> bool {
 	return true
 }
 
+
 load_local_dll :: proc(dll: string) {
 
-	fullPath, ok := filepath.abs(dll, context.temp_allocator)
+	fullPath, ok := windows_get_full_path(dll)
+	if !ok {
+		return
+	}
 	dll_win_path := windows.utf8_to_wstring(fullPath)
 	local_handle := windows.LoadLibraryW(dll_win_path)
 	pLocalFunc := windows.GetProcAddress(local_handle, "alert")
