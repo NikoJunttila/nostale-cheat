@@ -1,0 +1,473 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>CPacketUI</class>
+ <widget class="QWidget" name="CPacketUI">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>701</width>
+    <height>401</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>[BladeTiger12] - NosTale PacketLogger</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QTextEdit,QGroupBox,QListWidget,QLabel,QCheckBox,QRadioButton,QPushButton,QLineEdit {
+	background-color: #1E1E1E;
+	font: 9pt &quot;Verdana&quot;;
+	color: white;
+}
+
+QPushButton {
+	background-color: rgb(70, 70, 70);
+}</string>
+  </property>
+  <widget class="CAdvancedListWidget" name="lwPacketList">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>701</width>
+     <height>401</height>
+    </rect>
+   </property>
+   <property name="lineWidth">
+    <number>1</number>
+   </property>
+   <property name="verticalScrollBarPolicy">
+    <enum>Qt::ScrollBarAlwaysOn</enum>
+   </property>
+   <property name="horizontalScrollBarPolicy">
+    <enum>Qt::ScrollBarAlwaysOff</enum>
+   </property>
+   <property name="sizeAdjustPolicy">
+    <enum>QAbstractScrollArea::AdjustIgnored</enum>
+   </property>
+   <property name="editTriggers">
+    <set>QAbstractItemView::NoEditTriggers</set>
+   </property>
+   <property name="selectionMode">
+    <enum>QAbstractItemView::ExtendedSelection</enum>
+   </property>
+   <property name="verticalScrollMode">
+    <enum>QAbstractItemView::ScrollPerItem</enum>
+   </property>
+   <property name="horizontalScrollMode">
+    <enum>QAbstractItemView::ScrollPerItem</enum>
+   </property>
+   <property name="wordWrap">
+    <bool>false</bool>
+   </property>
+   <property name="selectionRectVisible">
+    <bool>false</bool>
+   </property>
+  </widget>
+  <widget class="CAdvancedGroupBox" name="gbLoggerSettings">
+   <property name="geometry">
+    <rect>
+     <x>460</x>
+     <y>290</y>
+     <width>205</width>
+     <height>101</height>
+    </rect>
+   </property>
+   <property name="title">
+    <string>Settings</string>
+   </property>
+   <widget class="QCheckBox" name="cbAutoScroll">
+    <property name="geometry">
+     <rect>
+      <x>12</x>
+      <y>74</y>
+      <width>51</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Verdana</family>
+      <pointsize>9</pointsize>
+      <weight>50</weight>
+      <italic>false</italic>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Scroll</string>
+    </property>
+    <property name="checked">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="cbLogSendPackets">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>20</y>
+      <width>81</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Verdana</family>
+      <pointsize>9</pointsize>
+      <weight>50</weight>
+      <italic>false</italic>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Log Send</string>
+    </property>
+    <property name="checked">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="cbLogReceivePackets">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>40</y>
+      <width>81</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Verdana</family>
+      <pointsize>9</pointsize>
+      <weight>50</weight>
+      <italic>false</italic>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Log Recv</string>
+    </property>
+    <property name="checked">
+     <bool>true</bool>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pbClearLog">
+    <property name="geometry">
+     <rect>
+      <x>90</x>
+      <y>70</y>
+      <width>51</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Verdana</family>
+      <pointsize>9</pointsize>
+      <weight>50</weight>
+      <italic>false</italic>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="text">
+     <string>Clear</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pbRecvFilter">
+    <property name="geometry">
+     <rect>
+      <x>90</x>
+      <y>40</y>
+      <width>51</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Verdana</family>
+      <pointsize>9</pointsize>
+      <weight>50</weight>
+      <italic>false</italic>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true"/>
+    </property>
+    <property name="text">
+     <string>Filter</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pbSendFilter">
+    <property name="geometry">
+     <rect>
+      <x>90</x>
+      <y>20</y>
+      <width>51</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Verdana</family>
+      <pointsize>9</pointsize>
+      <weight>50</weight>
+      <italic>false</italic>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true"/>
+    </property>
+    <property name="text">
+     <string>Filter</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pbSendBlocker">
+    <property name="geometry">
+     <rect>
+      <x>145</x>
+      <y>20</y>
+      <width>55</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Verdana</family>
+      <pointsize>9</pointsize>
+      <weight>50</weight>
+      <italic>false</italic>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true"/>
+    </property>
+    <property name="text">
+     <string>Blocker</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pbRecvBlocker">
+    <property name="geometry">
+     <rect>
+      <x>145</x>
+      <y>40</y>
+      <width>55</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Verdana</family>
+      <pointsize>9</pointsize>
+      <weight>50</weight>
+      <italic>false</italic>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true"/>
+    </property>
+    <property name="text">
+     <string>Blocker</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pbSender">
+    <property name="geometry">
+     <rect>
+      <x>145</x>
+      <y>70</y>
+      <width>55</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Verdana</family>
+      <pointsize>9</pointsize>
+      <weight>50</weight>
+      <italic>false</italic>
+      <bold>false</bold>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true"/>
+    </property>
+    <property name="text">
+     <string>Sender</string>
+    </property>
+   </widget>
+  </widget>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>CAdvancedListWidget</class>
+   <extends>QListWidget</extends>
+   <header>AdvancedListWidget.h</header>
+   <slots>
+    <signal>mouseMoveEvent(QMouseEvent*)</signal>
+   </slots>
+  </customwidget>
+  <customwidget>
+   <class>CAdvancedGroupBox</class>
+   <extends>QGroupBox</extends>
+   <header>AdvancedGroupBox.h</header>
+   <container>1</container>
+   <slots>
+    <signal>leaveEvent(QEvent*)</signal>
+   </slots>
+  </customwidget>
+ </customwidgets>
+ <tabstops>
+  <tabstop>cbLogSendPackets</tabstop>
+  <tabstop>pbSendFilter</tabstop>
+  <tabstop>cbLogReceivePackets</tabstop>
+  <tabstop>pbRecvFilter</tabstop>
+  <tabstop>cbAutoScroll</tabstop>
+  <tabstop>pbClearLog</tabstop>
+  <tabstop>lwPacketList</tabstop>
+ </tabstops>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>lwPacketList</sender>
+   <signal>mouseMoveEvent(QMouseEvent*)</signal>
+   <receiver>CPacketUI</receiver>
+   <slot>onAdvancedLWMove(QMouseEvent*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>546</x>
+     <y>180</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1063</x>
+     <y>201</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pbClearLog</sender>
+   <signal>clicked()</signal>
+   <receiver>CPacketUI</receiver>
+   <slot>onLogClearClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>650</x>
+     <y>355</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>801</x>
+     <y>364</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>gbLoggerSettings</sender>
+   <signal>leaveEvent(QEvent*)</signal>
+   <receiver>CPacketUI</receiver>
+   <slot>onAdvancedGBLeave(QEvent*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>639</x>
+     <y>290</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>857</x>
+     <y>288</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pbSendFilter</sender>
+   <signal>clicked()</signal>
+   <receiver>CPacketUI</receiver>
+   <slot>onSendFilter()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>621</x>
+     <y>311</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>835</x>
+     <y>316</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pbRecvFilter</sender>
+   <signal>clicked()</signal>
+   <receiver>CPacketUI</receiver>
+   <slot>onRecvFilter()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>638</x>
+     <y>330</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>759</x>
+     <y>340</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pbSendBlocker</sender>
+   <signal>clicked()</signal>
+   <receiver>CPacketUI</receiver>
+   <slot>onSendBlocker()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>658</x>
+     <y>319</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>791</x>
+     <y>311</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pbRecvBlocker</sender>
+   <signal>clicked()</signal>
+   <receiver>CPacketUI</receiver>
+   <slot>onRecvBlocker()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>644</x>
+     <y>346</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>834</x>
+     <y>347</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pbSender</sender>
+   <signal>clicked()</signal>
+   <receiver>CPacketUI</receiver>
+   <slot>onSenderPressed()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>645</x>
+     <y>372</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>886</x>
+     <y>382</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>onAdvancedLWMove(QMouseEvent*)</slot>
+  <slot>onLogClearClicked()</slot>
+  <slot>onAdvancedGBLeave(QEvent*)</slot>
+  <slot>onSendFilter()</slot>
+  <slot>onRecvFilter()</slot>
+  <slot>onSendBlocker()</slot>
+  <slot>onRecvBlocker()</slot>
+  <slot>onSenderPressed()</slot>
+ </slots>
+</ui>

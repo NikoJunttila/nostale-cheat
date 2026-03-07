@@ -1,11 +1,8 @@
 package injector
 
-import "core:c"
 import "core:fmt"
-import "core:mem"
 import "core:os"
 import "core:path/filepath"
-import "core:strings"
 import "core:sys/windows"
 
 LPTHREAD_START_ROUTINE :: #type proc "stdcall" (parameter: rawptr) -> u32

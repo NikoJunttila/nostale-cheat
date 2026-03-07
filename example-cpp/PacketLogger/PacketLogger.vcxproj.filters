@@ -1,0 +1,155 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{D9D6E242-F8AF-46E4-B9FD-80ECBC20BA3E}</UniqueIdentifier>
+      <Extensions>qrc;*</Extensions>
+      <ParseFiles>false</ParseFiles>
+    </Filter>
+    <Filter Include="Generated Files">
+      <UniqueIdentifier>{71ED8ED8-ACB9-4CE9-BBE1-E00B30144E11}</UniqueIdentifier>
+      <Extensions>moc;h;cpp</Extensions>
+      <SourceControlFiles>False</SourceControlFiles>
+    </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{ba3e8aba-2c2f-473d-b863-1ea5bf0f2776}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\AddressManager">
+      <UniqueIdentifier>{26cf2772-0e24-491b-a132-29b8590eda9e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Config">
+      <UniqueIdentifier>{c8c7fd44-11f7-4d92-b6bb-432d7690f7c1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\FilterUI">
+      <UniqueIdentifier>{76870ded-b974-46d6-9734-061c39b0f8ba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\FunctionPointer">
+      <UniqueIdentifier>{2d209149-7761-415a-a7a9-76cbd42654f1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\HookFunctions">
+      <UniqueIdentifier>{1136fb3e-14e9-4dc3-a653-74036a86d008}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\HookManager">
+      <UniqueIdentifier>{b3750fd0-0f51-436b-9fde-f7c96da46d74}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Memory">
+      <UniqueIdentifier>{e1ffabae-d87d-4836-903b-25a525b61c7b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\PacketSenderUI">
+      <UniqueIdentifier>{ff0a5f43-9759-4e10-b436-461286fdf262}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\PacketUI">
+      <UniqueIdentifier>{e3b97107-ffa0-431d-9ce2-a0b1c6301ee2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\TCPServer">
+      <UniqueIdentifier>{9f225e44-ed71-4682-9c58-0f0be160e276}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\UI">
+      <UniqueIdentifier>{3c997270-a268-485d-aac9-e1022b06c3e2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\UI\AdvancedGroupBox">
+      <UniqueIdentifier>{d145613d-b1bb-4a9f-b293-784dd9be6a54}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\UI\AdvancedListWidget">
+      <UniqueIdentifier>{d2f0d102-3c89-49f2-9604-bf0f3ad58edb}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="PacketSenderUI.cpp">
+      <Filter>Source\PacketSenderUI</Filter>
+    </ClCompile>
+    <ClCompile Include="PacketUI.cpp">
+      <Filter>Source\PacketUI</Filter>
+    </ClCompile>
+    <ClCompile Include="Memory.cpp">
+      <Filter>Source\Memory</Filter>
+    </ClCompile>
+    <ClCompile Include="HookManager.cpp">
+      <Filter>Source\HookManager</Filter>
+    </ClCompile>
+    <ClCompile Include="HookFunctions.cpp">
+      <Filter>Source\HookFunctions</Filter>
+    </ClCompile>
+    <ClCompile Include="FilterUI.cpp">
+      <Filter>Source\FilterUI</Filter>
+    </ClCompile>
+    <ClCompile Include="Config.cpp">
+      <Filter>Source\Config</Filter>
+    </ClCompile>
+    <ClCompile Include="AddressManager.cpp">
+      <Filter>Source\AddressManager</Filter>
+    </ClCompile>
+    <ClCompile Include="AdvancedGroupBox.cpp">
+      <Filter>Source\UI\AdvancedGroupBox</Filter>
+    </ClCompile>
+    <ClCompile Include="AdvancedListWidget.cpp">
+      <Filter>Source\UI\AdvancedListWidget</Filter>
+    </ClCompile>
+    <ClCompile Include="AddressFunctions.cpp">
+      <Filter>Source\FunctionPointer</Filter>
+    </ClCompile>
+    <ClCompile Include="TcpServer.cpp">
+      <Filter>Source\TCPServer</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Memory.h">
+      <Filter>Source\Memory</Filter>
+    </ClInclude>
+    <ClInclude Include="HookManager.h">
+      <Filter>Source\HookManager</Filter>
+    </ClInclude>
+    <ClInclude Include="HookFunctions.h">
+      <Filter>Source\HookFunctions</Filter>
+    </ClInclude>
+    <ClInclude Include="Config.h">
+      <Filter>Source\Config</Filter>
+    </ClInclude>
+    <ClInclude Include="AddressManager.h">
+      <Filter>Source\AddressManager</Filter>
+    </ClInclude>
+    <ClInclude Include="AddressFunctions.h">
+      <Filter>Source\FunctionPointer</Filter>
+    </ClInclude>
+    <ClInclude Include="Typedef.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+    <ClInclude Include="Defines.h">
+      <Filter>Source</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="PacketSenderUI.h">
+      <Filter>Source\PacketSenderUI</Filter>
+    </QtMoc>
+    <QtMoc Include="PacketUI.h">
+      <Filter>Source\PacketUI</Filter>
+    </QtMoc>
+    <QtMoc Include="FilterUI.h">
+      <Filter>Source\FilterUI</Filter>
+    </QtMoc>
+    <QtMoc Include="AdvancedGroupBox.h">
+      <Filter>Source\UI\AdvancedGroupBox</Filter>
+    </QtMoc>
+    <QtMoc Include="AdvancedListWidget.h">
+      <Filter>Source\UI\AdvancedListWidget</Filter>
+    </QtMoc>
+    <QtMoc Include="TcpServer.h">
+      <Filter>Source\TCPServer</Filter>
+    </QtMoc>
+  </ItemGroup>
+  <ItemGroup>
+    <QtUic Include="PacketSenderUI.ui">
+      <Filter>Source\PacketSenderUI</Filter>
+    </QtUic>
+    <QtUic Include="PacketUI.ui">
+      <Filter>Source\PacketUI</Filter>
+    </QtUic>
+    <QtUic Include="FilterUI.ui">
+      <Filter>Source\FilterUI</Filter>
+    </QtUic>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>CFilterUI</class>
+ <widget class="QWidget" name="CFilterUI">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>328</width>
+    <height>372</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Filter</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QTextEdit,QGroupBox,QListWidget,QLabel,QCheckBox,QRadioButton,QPushButton,QLineEdit {
+	background-color: #1E1E1E;
+	font: 8pt &quot;Verdana&quot;;
+	color: white;
+}
+
+QPushButton {
+	background-color: rgb(70, 70, 70);
+}
+
+#CFilterUI {
+	background-color: #1E1E1E;
+}</string>
+  </property>
+  <widget class="QListWidget" name="lwFilter">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>161</width>
+     <height>371</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="leFilterData">
+   <property name="geometry">
+    <rect>
+     <x>170</x>
+     <y>50</y>
+     <width>151</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+  </widget>
+  <widget class="QLabel" name="lFilter">
+   <property name="geometry">
+    <rect>
+     <x>170</x>
+     <y>30</y>
+     <width>47</width>
+     <height>13</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">font-size: 14px;</string>
+   </property>
+   <property name="text">
+    <string>Filter:</string>
+   </property>
+  </widget>
+  <widget class="QRadioButton" name="rbContains">
+   <property name="geometry">
+    <rect>
+     <x>170</x>
+     <y>120</y>
+     <width>71</width>
+     <height>17</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Contains</string>
+   </property>
+   <property name="checked">
+    <bool>false</bool>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">bg2</string>
+   </attribute>
+  </widget>
+  <widget class="QRadioButton" name="rbRegular">
+   <property name="geometry">
+    <rect>
+     <x>170</x>
+     <y>150</y>
+     <width>131</width>
+     <height>17</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Regular Expression</string>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">bg2</string>
+   </attribute>
+  </widget>
+  <widget class="QRadioButton" name="rbBeginWith">
+   <property name="geometry">
+    <rect>
+     <x>170</x>
+     <y>90</y>
+     <width>91</width>
+     <height>17</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Begins with</string>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">bg2</string>
+   </attribute>
+  </widget>
+  <widget class="QRadioButton" name="rbEndsWith">
+   <property name="geometry">
+    <rect>
+     <x>170</x>
+     <y>180</y>
+     <width>81</width>
+     <height>17</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Ends with</string>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">bg2</string>
+   </attribute>
+  </widget>
+  <widget class="QPushButton" name="pbAdd">
+   <property name="geometry">
+    <rect>
+     <x>177</x>
+     <y>290</y>
+     <width>141</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Add</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pbRemove">
+   <property name="geometry">
+    <rect>
+     <x>177</x>
+     <y>330</y>
+     <width>141</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Remove Selected</string>
+   </property>
+  </widget>
+  <widget class="QRadioButton" name="rbWhitelist">
+   <property name="geometry">
+    <rect>
+     <x>250</x>
+     <y>250</y>
+     <width>71</width>
+     <height>17</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Whitelist</string>
+   </property>
+   <property name="checked">
+    <bool>false</bool>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">bg1</string>
+   </attribute>
+  </widget>
+  <widget class="QRadioButton" name="rbBlacklist">
+   <property name="geometry">
+    <rect>
+     <x>170</x>
+     <y>250</y>
+     <width>71</width>
+     <height>17</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Blacklist</string>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">bg1</string>
+   </attribute>
+  </widget>
+  <widget class="QCheckBox" name="cbActivated">
+   <property name="geometry">
+    <rect>
+     <x>170</x>
+     <y>5</y>
+     <width>111</width>
+     <height>17</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Filter activated</string>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QRadioButton" name="rbPacketName">
+   <property name="geometry">
+    <rect>
+     <x>170</x>
+     <y>210</y>
+     <width>101</width>
+     <height>17</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>PacketName</string>
+   </property>
+   <attribute name="buttonGroup">
+    <string notr="true">bg2</string>
+   </attribute>
+  </widget>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <tabstops>
+  <tabstop>lwFilter</tabstop>
+  <tabstop>leFilterData</tabstop>
+  <tabstop>rbBeginWith</tabstop>
+  <tabstop>rbContains</tabstop>
+  <tabstop>rbRegular</tabstop>
+  <tabstop>rbEndsWith</tabstop>
+  <tabstop>pbAdd</tabstop>
+  <tabstop>pbRemove</tabstop>
+ </tabstops>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>leFilterData</sender>
+   <signal>returnPressed()</signal>
+   <receiver>CFilterUI</receiver>
+   <slot>onReturnPressed()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>266</x>
+     <y>38</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>323</x>
+     <y>35</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pbAdd</sender>
+   <signal>clicked()</signal>
+   <receiver>CFilterUI</receiver>
+   <slot>onAddPressed()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>240</x>
+     <y>309</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>323</x>
+     <y>242</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pbRemove</sender>
+   <signal>clicked()</signal>
+   <receiver>CFilterUI</receiver>
+   <slot>onRemovePressed()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>240</x>
+     <y>348</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>323</x>
+     <y>297</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>onAddPressed()</slot>
+  <slot>onRemovePressed()</slot>
+  <slot>onReturnPressed()</slot>
+ </slots>
+ <buttongroups>
+  <buttongroup name="bg1"/>
+  <buttongroup name="bg2"/>
+ </buttongroups>
+</ui>

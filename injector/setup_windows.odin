@@ -1,12 +1,8 @@
 package injector
 
-import "core:c"
 import "core:fmt"
-import "core:mem"
 import "core:os"
 import "core:path/filepath"
-import "core:strings"
-import "core:sys/windows"
 import "core:time"
 
 setup_and_inject :: proc(proc_name, dll_path: string) -> bool {
