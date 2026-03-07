@@ -19,13 +19,13 @@ odin build ./injector/ -target:windows_i386 -out:injector.exe
 exit /b %errorlevel%
 
 :simple
-@echo Building simple injector.exe
-odin build ./simple-injector/ -target:windows_i386 -out:simple.exe
+@echo Building test injector.exe
+odin build ./test-injector/ -target:windows_i386 -out:exampleinjector.exe
 exit /b %errorlevel%
 
 :example
 @echo Building simple injector.exe
-odin build ./example32bit/ -target:windows_i386 -out:exampletotarget.exe
+odin build ./testexetoinject/ -target:windows_i386 -out:exampletotarget.exe
 exit /b %errorlevel%
 
 :clean
