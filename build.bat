@@ -10,11 +10,12 @@ if "%~1"=="" (
 :build_dll
 @echo Building simple.dll
 odin build ./simple-dll/ -target:windows_i386 -build-mode:dll -out:simple.dll
+del /q *.obj *.exp *.lib
 exit /b %errorlevel%
 
 :injector
 @echo Building injector.exe
-odin build . -target:windows_i386 -out:injector.exe
+odin build ./injector/ -target:windows_i386 -out:injector.exe
 exit /b %errorlevel%
 
 :clean

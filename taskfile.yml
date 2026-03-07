@@ -10,7 +10,7 @@ tasks:
   injector:
     desc: build injector
     cmds:
-      - odin build . -target:windows_i386 -out:injector.exe
+      - odin build ./injector/ -target:windows_i386 -out:injector.exe
 
   clean:
     desc: clean up
