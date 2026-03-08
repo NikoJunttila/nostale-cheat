@@ -6,7 +6,6 @@ import "core:time"
 // LPTHREAD_START_ROUTINE :: #type proc "stdcall" (parameter: rawptr) -> u32
 
 actual_main :: proc() {
-	// setup_console()
 	iteration := 0
 	log_info("payload main entered")
 	for {
