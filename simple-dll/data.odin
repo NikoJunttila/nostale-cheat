@@ -166,13 +166,93 @@ get_player_sp_internal :: proc(baseAddr: ^u8, baseSize: u32) -> (^u8, bool) {
 
 	return cast(^u8)(final_addr), true
 }
+packetlogger_addrs :: struct {
+	RecvHookAddy: uintptr,
+	TNTClient:    uintptr,
+	SendAddy:     uintptr,
+}
 
+get_packetlogger_addrs :: proc(baseAddr: ^u8, baseSize: u32) -> bool {
+	// RecvHookAddy
+	pattern_recv := []byte {
+		0xe8,
+		0,
+		0,
+		0,
+		0,
+		0x33,
+		0xc0,
+		0x55,
+		0x68,
+		0,
+		0,
+		0,
+		0,
+		0x64,
+		0xff,
+		0,
+		0x64,
+		0x89,
+		0,
+		0x8d,
+		0x45,
+		0,
+		0x8b,
+		0x55,
+	}
+	mask_recv := "x????xxxx????xx?xx?xx?xx"
+	addr, ok := find_pattern_internal(baseAddr, baseSize, pattern_recv, mask_recv)
+	if !ok {
+		fmt.println("RecvHookAddy pattern not found")
+		return false
+	}
+	global_addrs.RecvHookAddy = addr
 
-// Call FindPattern for the 4 core signatures: RecvHook, SendHook, SendHook-Vendetta fallback, and PacketClassPointer.
+	// TNTClient
+	pattern_tnt := []byte {
+		0xA1,
+		0,
+		0,
+		0,
+		0,
+		0x8B,
+		0,
+		0xE8,
+		0,
+		0,
+		0,
+		0,
+		0xA1,
+		0,
+		0,
+		0,
+		0,
+		0x8B,
+		0,
+		0x33,
+		0xD2,
+		0x89,
+		0x10,
+	}
+	mask_tnt := "x????xxx????x????xxxxxx"
+	addr_tnt, ok_tnt := find_pattern_internal(baseAddr, baseSize, pattern_tnt, mask_tnt)
+	if !ok_tnt {
+		fmt.println("TNTClient pattern not found")
+		return false
+	}
+	global_addrs.TNTClient = addr_tnt + 1
+
+	// SendAddy
+	pattern_send := []byte{0xeb, 0, 0xeb, 0, 0x39, 0x19, 0x8b, 0xd6}
+	mask_send := "x?x?xxxx"
+	addr_send, ok_send := find_pattern_internal(baseAddr, baseSize, pattern_send, mask_send)
+	if !ok_send {
+		fmt.println("SendAddy pattern not found")
+		return false
+	}
+	global_addrs.SendAddy = addr_send - 6
+
+	return true
+}
+
 // Store the resolved addresses in global variables or a map.
-
-// void ReadPattern(const EAddress i_eAddress, const byte *i_abSignature, const char *i_szMask, const DWORD i_dwAdd = 0) {
-// 	DWORD dwAddress = Memory::FindPattern(i_abSignature, i_szMask);
-// 	if (dwAddress && i_dwAdd) {
-// 		dwAddress = *reinterpret_cast<DWORD*>(dwAddress + i_dwAdd);
-// 	}

@@ -4,6 +4,8 @@ import "core:fmt"
 import "core:time"
 
 // LPTHREAD_START_ROUTINE :: #type proc "stdcall" (parameter: rawptr) -> u32
+global_addrs: packetlogger_addrs
+packet_queue: SafeQueue
 
 actual_main :: proc() {
 	iteration := 0
@@ -21,15 +23,30 @@ actual_main :: proc() {
 	} else {
 		log_info("failed to get sp level")
 	}
-	for {
-		fmt.println("payload heartbeat")
-		time.sleep(5000 * time.Millisecond)
-		iteration += 1
-		if iteration % 10 == 0 {
-			log_warn("payload still alive")
-		} else {
-			log_info("payload heartbeat")
 
+	ok3 := get_packetlogger_addrs(cast(^u8)modinfo.lpBaseOfDll, u32(modinfo.SizeOfImage))
+	if ok3 {
+		// init_packetlogger(&packet_queue, global_addrs)
+		// hook_recv()
+		log_info("packetlogger hooked")
+	} else {
+		log_warn("failed to get packetlogger addresses")
+	}
+
+	for {
+		// Fetch packets from queue
+		for !empty(&packet_queue) {
+			packet, q_ok := front(&packet_queue)
+			if q_ok {
+				log_info(fmt.aprintf("RECV: %s", packet))
+			}
+			pop(&packet_queue)
+		}
+
+		time.sleep(100 * time.Millisecond)
+		iteration += 1
+		if iteration % 50 == 0 {
+			log_warn("payload still alive")
 		}
 	}
 }

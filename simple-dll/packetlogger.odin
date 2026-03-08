@@ -1,84 +1,204 @@
 package payload
-
-// #include "Packetlogger.h"
-// #include "NostaleString.h"
-// #include <iostream>
 //
-// #define HOOK_SIZE 5
+// import "base:runtime"
+// import "core:fmt"
+// import "core:mem"
+// import "core:strings"
+// import win "core:sys/windows"
 //
-// SafeQueue* qRecv;
-// DWORD SendAddy;
-// DWORD RecvHookAddy;
-// DWORD TNTClient;
-// DWORD originalCallAddy;
-// DWORD jmpBackAddy;
-// BYTE originalBytes[10]{ 0 };
-// char* packet;
+// HOOK_SIZE :: 5
 //
-// void __declspec(naked) CustomRecv()
-// {
-// 	__asm
-// 	{
-// 		pushad;
-// 		pushfd;
-// 		mov packet, edx;
-// 	}
+// // Global state
+// qRecv: ^SafeQueue
+// SendAddy: uintptr
+// RecvHookAddy: uintptr
+// TNTClient: uintptr
+// originalCallAddy: uintptr
+// jmpBackAddy: uintptr
+// originalBytes: [10]byte
 //
-// 	qRecv->push(packet);
+// trampoline_addr: uintptr
+// send_packet_proc: proc "c" (tnt_client: uintptr, packet: cstring, send_addy: uintptr)
 //
-// 	__asm
-// 	{
-// 		popfd;
-// 		popad;
-// 		call originalCallAddy;
-// 		jmp jmpBackAddy;
+// // The Odin hook receiver that pushes to our queue
+// @(export, default_calling_convention = "c")
+// odin_custom_recv :: proc(packet_ptr: cstring) {
+// 	// Odin needs an active context when called from unmanaged thread
+// 	context = runtime.default_context()
+//
+// 	if packet_ptr != nil && qRecv != nil {
+// 		packet_str := string(packet_ptr)
+// 		// SafeQueue's push handles taking a copy of the string data internally
+// 		push(qRecv, packet_str)
 // 	}
 // }
 //
-// void Packetlogger::Initialize(SafeQueue* safeQueue)
-// {
-// 	RecvHookAddy = Memory::FindPattern(
-// 		(char*)"\xe8\x00\x00\x00\x00\x33\xc0\x55\x68\x00\x00\x00\x00\x64\xff\x00\x64\x89\x00\x8d\x45\x00\x8b\x55",
-// 		(char*)"x????xxxx????xx?xx?xx?xx");
+// init_packetlogger :: proc(queue: ^SafeQueue, addrs: pl_addrs) {
+// 	qRecv = queue
+// 	RecvHookAddy = addrs.RecvHookAddy
+// 	TNTClient = addrs.TNTClient
+// 	SendAddy = addrs.SendAddy
 //
-// 	TNTClient = Memory::FindPattern(
-// 		(char*)"\xA1\x00\x00\x00\x00\x8B\x00\xE8\x00\x00\x00\x00\xA1\x00\x00\x00\x00\x8B\x00\x33\xD2\x89\x10",
-// 		(char*)"x????xxx????x????xxxxxx") + 1;
+// 	jmpBackAddy = RecvHookAddy + HOOK_SIZE
 //
-// 	SendAddy = Memory::FindPattern((char*)"\xeb\x00\xeb\x00\x39\x19\x8b\xd6", (char*)"x?x?xxxx") - 6;
+// 	// Calculate original call destination
+// 	callArgAddy := (cast(^u32)(RecvHookAddy + 1))^
+// 	// originalCallAddy = RecvHookAddy + offset + 5
+// 	originalCallAddy = RecvHookAddy + uintptr(callArgAddy) + HOOK_SIZE
 //
-// 	qRecv = safeQueue;
+// 	// Save original bytes
+// 	copy(originalBytes[:HOOK_SIZE], (cast([^]byte)RecvHookAddy)[:HOOK_SIZE])
 //
-// 	jmpBackAddy = RecvHookAddy + HOOK_SIZE;
+// 	// ----------------------------------------------------
+// 	// 1. Generate trampoline for CustomRecv
+// 	// ----------------------------------------------------
+// 	trampoline_addr = cast(uintptr)win.VirtualAlloc(
+// 		nil,
+// 		128,
+// 		win.MEM_COMMIT | win.MEM_RESERVE,
+// 		win.PAGE_EXECUTE_READWRITE,
+// 	)
 //
-// 	DWORD callArgAddy = *(DWORD*)(RecvHookAddy + 1);
-// 	originalCallAddy = RecvHookAddy + callArgAddy + HOOK_SIZE;
-// 	memcpy_s(originalBytes, HOOK_SIZE, (LPVOID)RecvHookAddy, HOOK_SIZE);
-// }
+// 	if trampoline_addr != 0 {
+// 		t := cast([^]byte)trampoline_addr
+// 		idx: uintptr = 0
 //
+// 		t[idx] = 0x60; idx += 1 // pushad
+// 		t[idx] = 0x9C; idx += 1 // pushfd
+// 		t[idx] = 0x52; idx += 1 // push edx (where packet string pointer is stored)
 //
-// void Packetlogger::SendPacket(LPCSTR szPacket)
-// {
-// 	NostaleStringA str(szPacket);
-// 	char* packet = str.get();
+// 		// call odin_custom_recv
+// 		t[idx] = 0xE8; idx += 1
+// 		offset1 := u32(cast(uintptr)odin_custom_recv - (trampoline_addr + idx + 4))
+// 		(cast(^u32)(&t[idx]))^ = offset1
+// 		idx += 4
 //
-// 	__asm
-// 	{
-// 		mov eax, dword ptr ds : [TNTClient];
-// 		mov eax, dword ptr ds : [eax];
-// 		mov eax, dword ptr ds : [eax];
-// 		mov eax, dword ptr ds : [eax];
-// 		mov edx, packet;
-// 		call SendAddy;
+// 		// add esp, 4
+// 		t[idx] = 0x83; idx += 1
+// 		t[idx] = 0xC4; idx += 1
+// 		t[idx] = 0x04; idx += 1
+//
+// 		t[idx] = 0x9D; idx += 1 // popfd
+// 		t[idx] = 0x61; idx += 1 // popad
+//
+// 		// call originalCallAddy
+// 		t[idx] = 0xE8; idx += 1
+// 		offset2 := u32(originalCallAddy - (trampoline_addr + idx + 4))
+// 		(cast(^u32)(&t[idx]))^ = offset2
+// 		idx += 4
+//
+// 		// jmp jmpBackAddy
+// 		t[idx] = 0xE9; idx += 1
+// 		offset3 := u32(jmpBackAddy - (trampoline_addr + idx + 4))
+// 		(cast(^u32)(&t[idx]))^ = offset3
+// 		idx += 4
+// 	} else {
+// 		log_error("Failed to allocate trampoline memory")
+// 	}
+//
+// 	// ----------------------------------------------------
+// 	// 2. Generate stub for SendPacket
+// 	// ----------------------------------------------------
+// 	send_stub_addr := cast(uintptr)win.VirtualAlloc(
+// 		nil,
+// 		64,
+// 		win.MEM_COMMIT | win.MEM_RESERVE,
+// 		win.PAGE_EXECUTE_READWRITE,
+// 	)
+//
+// 	if send_stub_addr != 0 {
+// 		s := cast([^]byte)send_stub_addr
+// 		stub_bytes := []byte {
+// 			0x55, // push ebp
+// 			0x89,
+// 			0xE5, // mov ebp, esp
+// 			0x8B,
+// 			0x45,
+// 			0x08, // mov eax, [ebp+8]   (tnt_client)
+// 			0x8B,
+// 			0x00, // mov eax, [eax]
+// 			0x8B,
+// 			0x00, // mov eax, [eax]
+// 			0x8B,
+// 			0x00, // mov eax, [eax]
+// 			0x8B,
+// 			0x55,
+// 			0x0C, // mov edx, [ebp+12]  (packet)
+// 			0x8B,
+// 			0x4D,
+// 			0x10, // mov ecx, [ebp+16]  (send_addy)
+// 			0xFF,
+// 			0xD1, // call ecx
+// 			0x89,
+// 			0xEC, // mov esp, ebp
+// 			0x5D, // pop ebp
+// 			0xC3, // ret
+// 		}
+// 		copy(s[:len(stub_bytes)], stub_bytes)
+// 		send_packet_proc = cast(proc "c" (_: uintptr, _: cstring, _: uintptr))send_stub_addr
+// 	} else {
+// 		log_error("Failed to allocate send_stub memory")
 // 	}
 // }
 //
-// void Packetlogger::HookRecv()
-// {
-// 	Memory::Hook((LPVOID)RecvHookAddy, CustomRecv, HOOK_SIZE);
+// hook_recv :: proc() {
+// 	if trampoline_addr == 0 {return}
+//
+// 	oldProtect: win.DWORD
+// 	win.VirtualProtect(
+// 		cast(win.LPVOID)RecvHookAddy,
+// 		HOOK_SIZE,
+// 		win.PAGE_EXECUTE_READWRITE,
+// 		&oldProtect,
+// 	)
+//
+// 	dst := cast([^]byte)RecvHookAddy
+// 	dst[0] = 0xE9 // jmp
+// 	offset := u32(trampoline_addr - (RecvHookAddy + 5))
+// 	(cast(^u32)(&dst[1]))^ = offset
+//
+// 	win.VirtualProtect(cast(win.LPVOID)RecvHookAddy, HOOK_SIZE, oldProtect, &oldProtect)
 // }
 //
-// void Packetlogger::UnhookRecv()
-// {
-// 	Memory::Patch((BYTE*)RecvHookAddy, originalBytes, HOOK_SIZE);
+// unhook_recv :: proc() {
+// 	if trampoline_addr == 0 {return}
+//
+// 	oldProtect: win.DWORD
+// 	win.VirtualProtect(
+// 		cast(win.LPVOID)RecvHookAddy,
+// 		HOOK_SIZE,
+// 		win.PAGE_EXECUTE_READWRITE,
+// 		&oldProtect,
+// 	)
+//
+// 	copy((cast([^]byte)RecvHookAddy)[:HOOK_SIZE], originalBytes[:HOOK_SIZE])
+//
+// 	win.VirtualProtect(cast(win.LPVOID)RecvHookAddy, HOOK_SIZE, oldProtect, &oldProtect)
+// }
+//
+// // Emulates NostaleStringA
+// send_packet_internal :: proc(szPacket: string) {
+// 	if send_packet_proc == nil || TNTClient == 0 || SendAddy == 0 {
+// 		return
+// 	}
+//
+// 	total_len := len(szPacket) + 8 + 1
+// 	buf, alloc_err := mem.alloc(total_len)
+// 	if alloc_err != nil {
+// 		log_error("allocation failed in send_packet_internal")
+// 		return
+// 	}
+// 	defer mem.free(buf)
+//
+// 	base := cast(uintptr)buf
+// 	(cast(^u32)base)^ = 1 // RefCount
+// 	(cast(^u32)(base + 4))^ = u32(len(szPacket)) // Length
+//
+// 	str_data := cast([^]u8)(base + 8)
+// 	copy(str_data[:len(szPacket)], cast([]u8)szPacket)
+// 	str_data[len(szPacket)] = 0 // null terminator
+//
+// 	packet_cstr := cast(cstring)&str_data[0]
+// 	// call the dynamic assembly stub using 'c' calling convention
+// 	send_packet_proc(TNTClient, packet_cstr, SendAddy)
 // }
