@@ -1,2 +1,3 @@
- Convert Defines.h constants to Odin package-level constants (remove all TCP, GUI, and AutoIt definitions).
- Convert EAddress and EPacketType (PTReceive, PTSend) enums to Odin enums.
+Port CompareData to Odin (basic byte-mask comparison loop).
+
+Port FindPattern to iterate over the game's memory range using uintptr arithmetic.
