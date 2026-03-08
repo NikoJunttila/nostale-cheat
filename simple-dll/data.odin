@@ -167,9 +167,11 @@ get_player_sp_internal :: proc(baseAddr: ^u8, baseSize: u32) -> (^u8, bool) {
 	return cast(^u8)(final_addr), true
 }
 packetlogger_addrs :: struct {
-	RecvHookAddy: uintptr,
-	TNTClient:    uintptr,
-	SendAddy:     uintptr,
+	RecvHookAddy:        uintptr,
+	TNTClient:           uintptr,
+	SendAddy:            uintptr,
+	PacketClassPointer:  uintptr,
+	RecvPacketCall:      uintptr,
 }
 
 get_packetlogger_addrs :: proc(baseAddr: ^u8, baseSize: u32) -> bool {
@@ -251,6 +253,40 @@ get_packetlogger_addrs :: proc(baseAddr: ^u8, baseSize: u32) -> bool {
 		return false
 	}
 	global_addrs.SendAddy = addr_send - 6
+	// Packet Class Pointer (used for RecvPacket)
+	// pattern: A1 ? ? ? ? 8B 00 80 78 60 00 74 1B 84 DB
+	pattern_pcp := []byte {
+		0xA1, 0x00, 0x00, 0x00, 0x00, 0x8B, 0x00, 0x80,
+		0x78, 0x60, 0x00, 0x74, 0x1B, 0x84, 0xDB,
+	}
+	mask_pcp := "x????xxxxxxxxxx"
+	addr_pcp, ok_pcp := find_pattern_internal(baseAddr, baseSize, pattern_pcp, mask_pcp)
+	if !ok_pcp {
+		fmt.println("PacketClassPointer pattern not found")
+		return false
+	}
+	
+	// Read the actual pointer value based on AddressManager.cpp Logic: 
+	// dwAddress = *reinterpret_cast<DWORD *>(dwAddress + i_dwAdd);
+	// where i_dwAdd = 1
+	ptr1 := (cast(^uintptr)(addr_pcp + 1))^
+	global_addrs.PacketClassPointer = ptr1
+
+	// In AddressManager.cpp: s_mapAddress[EAddress::ARecvPacket] = s_mapAddress[EAddress::ARecvHook];
+	// And ARecvHook has its own specific pattern.
+	pattern_recv_call := []byte {
+		0x55, 0x8B, 0xEC, 0x83, 0xC4, 0xF0, 0x53,
+		0x56, 0x57, 0x33, 0xC9, 0x89, 0x4D, 0xF4,
+		0x89, 0x4D, 0xF0, 0x89, 0x55, 0xFC, 0x8B,
+		0xD8, 0x8B, 0x45, 0xFC,
+	}
+	mask_recv_call := "xxxxx?xxxxxxx?xx?xx?xxxx?"
+	addr_recv_call, ok_recv_call := find_pattern_internal(baseAddr, baseSize, pattern_recv_call, mask_recv_call)
+	if !ok_recv_call {
+		fmt.println("RecvPacketCall pattern not found")
+		return false
+	}
+	global_addrs.RecvPacketCall = addr_recv_call
 
 	return true
 }

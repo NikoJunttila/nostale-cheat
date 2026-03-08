@@ -68,7 +68,7 @@ init_packetlogger :: proc(queue: ^SafeQueue) {
 
 		// call odin_custom_recv
 		t[idx] = 0xE8; idx += 1
-		offset1 := u32(transmute(uintptr)odin_custom_recv - (trampoline_addr + idx + 4))
+		offset1 := u32(cast(uintptr)rawptr(odin_custom_recv) - (trampoline_addr + idx + 4))
 		(cast(^u32)(&t[idx]))^ = offset1
 		idx += 4
 
@@ -134,9 +134,48 @@ init_packetlogger :: proc(queue: ^SafeQueue) {
 			0xC3, // ret
 		}
 		copy(s[:len(stub_bytes)], stub_bytes)
-		send_packet_proc = transmute(proc "c" (_: uintptr, _: cstring, _: uintptr))send_stub_addr
+		send_packet_proc = cast(proc "c" (uintptr, cstring, uintptr))rawptr(send_stub_addr)
 	} else {
 		log_error("Failed to allocate send_stub memory")
+	}
+
+	// ----------------------------------------------------
+	// 3. Generate stub for RecvPacket
+	// ----------------------------------------------------
+	recv_stub_addr := cast(uintptr)win.VirtualAlloc(
+		nil,
+		64,
+		win.MEM_COMMIT | win.MEM_RESERVE,
+		win.PAGE_EXECUTE_READWRITE,
+	)
+
+	if recv_stub_addr != 0 {
+		r := cast([^]byte)recv_stub_addr
+		// void RecvPacket(const QString &i_sString)
+		// mov eax, dword ptr ds : [dwPacketClass] -> in Odin we pass this as arg1 (ebp+8)
+		// mov eax, dword ptr ds : [eax]
+		// mov eax, dword ptr ds : [eax]
+		// mov eax, dword ptr ds : [eax + 34h]
+		// mov edx, szPacket -> arg2 (ebp+12)
+		// call dwPacketCall -> arg3 (ebp+16)
+		stub_bytes_recv := []byte {
+			0x55,             // push ebp
+			0x89, 0xE5,       // mov ebp, esp
+			0x8B, 0x45, 0x08, // mov eax, [ebp+8]   (packet_class_ptr)
+			0x8B, 0x00,       // mov eax, [eax]
+			0x8B, 0x00,       // mov eax, [eax]
+			0x8B, 0x40, 0x34, // mov eax, [eax+0x34]
+			0x8B, 0x55, 0x0C, // mov edx, [ebp+12]  (packet)
+			0x8B, 0x4D, 0x10, // mov ecx, [ebp+16]  (recv_call)
+			0xFF, 0xD1,       // call ecx
+			0x89, 0xEC,       // mov esp, ebp
+			0x5D,             // pop ebp
+			0xC3,             // ret
+		}
+		copy(r[:len(stub_bytes_recv)], stub_bytes_recv)
+		recv_packet_proc = cast(proc "c" (uintptr, cstring, uintptr))rawptr(recv_stub_addr)
+	} else {
+		log_error("Failed to allocate recv_stub memory")
 	}
 }
 
@@ -201,3 +240,34 @@ send_packet :: proc(szPacket: string) {
 	// call the dynamic assembly stub using 'c' calling convention
 	send_packet_proc(TNTClient, packet_cstr, SendAddy)
 }
+
+// Emulates NostaleStringA for Receive Packet
+recv_packet_proc: proc "c" (packet_class_ptr: uintptr, packet: cstring, recv_call: uintptr)
+
+recv_packet :: proc(szPacket: string) {
+	if recv_packet_proc == nil || global_addrs.PacketClassPointer == 0 || global_addrs.RecvPacketCall == 0 {
+		return
+	}
+
+	// We construct a fully compliant Delphi string with RefCount and Length.
+	// AddressFunctions.cpp's CNosString had `std::size_t m_nLength` right before `char m_szPacket[5192]`.
+	total_len := len(szPacket) + 8 + 1
+	buf, alloc_err := mem.alloc(total_len)
+	if alloc_err != nil {
+		log_error("allocation failed in recv_packet")
+		return
+	}
+	defer mem.free(buf)
+	
+	base := cast(uintptr)buf
+	(cast(^u32)base)^ = 1               // RefCount
+	(cast(^u32)(base + 4))^ = u32(len(szPacket)) // Length
+
+	str_data := cast([^]u8)(base + 8)
+	copy(str_data[:len(szPacket)], transmute([]u8)szPacket)
+	str_data[len(szPacket)] = 0
+
+	packet_cstr := cast(cstring)&str_data[0]
+	recv_packet_proc(global_addrs.PacketClassPointer, packet_cstr, global_addrs.RecvPacketCall)
+}
+

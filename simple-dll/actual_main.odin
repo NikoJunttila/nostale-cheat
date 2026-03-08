@@ -47,8 +47,10 @@ actual_main :: proc() {
 		time.sleep(100 * time.Millisecond)
 		iteration += 1
 		if iteration % 50 == 0 {
-			send_packet("0 tcrank 1")
-			log_info("revealing map")
+			log_info("revealing map with 0 (recv)")
+			recv_packet("0 tcrank 1") // this should send a client side packet that reveals map.
+			log_info("revealing map (recv)")
+			recv_packet("tcrank 1") // this should send a client side packet that reveals map.
 		}
 	}
 }
