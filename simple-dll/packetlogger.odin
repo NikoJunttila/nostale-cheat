@@ -1,10 +1,8 @@
 #+build windows
 package payload
-//
+
 import "base:runtime"
-import "core:fmt"
 import "core:mem"
-import "core:strings"
 import win "core:sys/windows"
 
 HOOK_SIZE :: 5
@@ -178,7 +176,7 @@ unhook_recv :: proc() {
 }
 
 // Emulates NostaleStringA
-send_packet_internal :: proc(szPacket: string) {
+send_packet :: proc(szPacket: string) {
 	if send_packet_proc == nil || TNTClient == 0 || SendAddy == 0 {
 		return
 	}

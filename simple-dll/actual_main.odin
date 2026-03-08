@@ -1,3 +1,4 @@
+#+build windows
 package payload
 
 import "core:fmt"
@@ -46,7 +47,8 @@ actual_main :: proc() {
 		time.sleep(100 * time.Millisecond)
 		iteration += 1
 		if iteration % 50 == 0 {
-			log_warn("payload still alive")
+			send_packet("0 tcrank 1")
+			log_info("revealing map")
 		}
 	}
 }
