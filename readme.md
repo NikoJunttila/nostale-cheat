@@ -14,3 +14,8 @@ The injected DLL now emits diagnostics through `OutputDebugStringA` so you can v
 2. Enable **Capture Global Win32** from the Capture menu and optionally filter to `[PAYLOAD]` messages.
 3. Run `build.bat` and inject the DLL; every heart beat writes `"[PAYLOAD] INFO"` or `"[PAYLOAD] WARN"` lines to DebugView.
 4. When DebugView shows the logs, you know the DLL is executing without touching the host process.
+
+
+## current progress
+
+packetlogger with send and recv client side packets

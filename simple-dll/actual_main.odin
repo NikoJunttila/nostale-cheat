@@ -57,8 +57,9 @@ actual_main :: proc() {
 			log_info("revealing map with 0 (recv)")
 			recv_packet("tcrank 1") // this should send a client side packet that reveals map.
 			// log_info("revealing map (recv)")
-			log_info("sending packet")
-			send_packet(fmt.aprintf("u_s %s 1 %s", 10, playerID))
+			s_packet := fmt.aprintf("u_s %d 1 %d", 10, playerID)
+			log_info(fmt.aprintf("sending packet: %s", s_packet))
+			send_packet(s_packet)
 		}
 	}
 }
