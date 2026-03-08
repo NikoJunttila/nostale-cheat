@@ -8,6 +8,8 @@ if "%~1"=="" (
 )
 
 :build_dll
+@echo Bumping version...
+odin run bump_version.odin -file
 @echo Building simple.dll
 odin build ./simple-dll/ -target:windows_i386 -build-mode:dll -out:simple.dll
 del /q *.obj *.exp *.lib
