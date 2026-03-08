@@ -2,11 +2,14 @@
 package payload
 
 import "core:fmt"
+import "core:strings"
 import "core:time"
 
 // LPTHREAD_START_ROUTINE :: #type proc "stdcall" (parameter: rawptr) -> u32
 global_addrs: packetlogger_addrs
 packet_queue: SafeQueue
+playerID: i32
+playerSP: u8
 
 actual_main :: proc() {
 	iteration := 0
@@ -15,12 +18,14 @@ actual_main :: proc() {
 	id, ok := get_player_id_internal(cast(^u8)modinfo.lpBaseOfDll, u32(modinfo.SizeOfImage))
 	if ok {
 		log_info(fmt.aprintf("player id: %d", id^))
+		playerID = id^
 	} else {
 		log_info("failed to get id")
 	}
 	sp, ok2 := get_player_sp_internal(cast(^u8)modinfo.lpBaseOfDll, u32(modinfo.SizeOfImage))
 	if ok2 {
 		log_info(fmt.aprintf("player level: %d", sp^))
+		playerSP = sp^
 	} else {
 		log_info("failed to get sp level")
 	}
@@ -39,7 +44,9 @@ actual_main :: proc() {
 		for !empty(&packet_queue) {
 			packet, q_ok := front(&packet_queue)
 			if q_ok {
-				log_info(fmt.aprintf("RECV: %s", packet))
+				if strings.contains(packet, "u_s") {
+					log_info(fmt.aprintf("RECV: %s", packet))
+				}
 			}
 			pop(&packet_queue)
 		}
@@ -48,9 +55,10 @@ actual_main :: proc() {
 		iteration += 1
 		if iteration % 50 == 0 {
 			log_info("revealing map with 0 (recv)")
-			recv_packet("0 tcrank 1") // this should send a client side packet that reveals map.
-			log_info("revealing map (recv)")
 			recv_packet("tcrank 1") // this should send a client side packet that reveals map.
+			// log_info("revealing map (recv)")
+			log_info("sending packet")
+			send_packet(fmt.aprintf("u_s %s 1 %s", 10, playerID))
 		}
 	}
 }

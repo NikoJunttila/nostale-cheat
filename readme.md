@@ -2,6 +2,10 @@ making a bot for nostale.
 
 new os package has some serious problems with the 32bit windows. quitly crashing everywhere.
 
+## linux injection inside proton
+
+protontricks -c 'wine injector.exe' 4240740151
+
 ## Payload logging
 
 The injected DLL now emits diagnostics through `OutputDebugStringA` so you can view everything without touching the game’s console or filesystem.
