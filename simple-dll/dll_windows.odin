@@ -26,8 +26,8 @@ actual_main :: proc() {
 
 	ok3 := get_packetlogger_addrs(cast(^u8)modinfo.lpBaseOfDll, u32(modinfo.SizeOfImage))
 	if ok3 {
-		// init_packetlogger(&packet_queue, global_addrs)
-		// hook_recv()
+		init_packetlogger(&packet_queue)
+		hook_recv()
 		log_info("packetlogger hooked")
 	} else {
 		log_warn("failed to get packetlogger addresses")
