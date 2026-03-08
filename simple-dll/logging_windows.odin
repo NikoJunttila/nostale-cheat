@@ -7,7 +7,7 @@ LOG_PREFIX_INFO :: "[PAYLOAD] INFO: "
 LOG_PREFIX_WARN :: "[PAYLOAD] WARN: "
 LOG_PREFIX_ERROR :: "[PAYLOAD] ERROR: "
 
-VERSION :: "1.0.10"
+VERSION :: "1.0.13"
 
 log_info :: proc(message: string) {
 	log_with_prefix(LOG_PREFIX_INFO, message)
