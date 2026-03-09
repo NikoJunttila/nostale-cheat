@@ -2,7 +2,6 @@
 package payload
 
 import "core:fmt"
-import "core:math/rand"
 import "core:time"
 
 
@@ -20,26 +19,22 @@ FishingState :: struct {
 	proCastLine:   bool,
 	proCastLineCD: time.Time,
 	covert:        bool,
+	needs_cast:    bool,
 }
 
 // Fishing mode packet handler
 handle_fishing_packet :: proc(bot: ^Bot, words: []string) {
 	switch words[0] {
-	case "guri":
+	case GURI:
 		log_info("handling guri")
 		fish_handleGURI(words, bot)
-	case "sayi":
+	case SAYI:
 		fish_handleSayi(bot, words)
-	case "su":
+	case SU:
 		fish_handleSU3(bot, words)
 	}
 }
-//sleep with min value and extra random value
-sleep :: proc(random: int) {
-	random := rand.int_max(random)
-	sleep_duration := time.Second * 5 + time.Duration(random) * time.Millisecond
-	time.sleep(sleep_duration)
-}
+
 fish_handleGURI :: proc(line: []string, bot: ^Bot) {
 	//fmt.println("handling guri:", line)
 	if len(line) < 6 {return}
@@ -52,20 +47,19 @@ fish_handleGURI :: proc(line: []string, bot: ^Bot) {
 		fish_str := fmt.aprintf("fish: %d", fishing_state.fish_caught)
 		log_info(fish_str)
 		delete(fish_str)
-		log_info("sleeping after fish caught")
-		// time.sleep(time.Second)
-		log_info("fish checkbuffs")
-	// fish_checkBuffs(bot)
+		log_info("waiting after fish caught")
+		bot.next_action = get_sleep_time(1000)
+		fishing_state.needs_cast = true
 	case "31":
 		log_info("legendary fish!!")
+		fish_castSkill("2", bot)
 		fishing_state.fish_caught += 1
 		fishing_state.leg_fish += 1
 		fish_str := fmt.aprintf("fish: %d", fishing_state.fish_caught)
 		log_info(fish_str)
 		delete(fish_str)
-		fish_castSkill("2", bot)
-		sleep(1000)
-		fish_checkBuffs(bot)
+		bot.next_action = get_sleep_time(1000)
+		fishing_state.needs_cast = true
 	}
 }
 
@@ -131,30 +125,28 @@ fish_checkBuffs :: proc(bot: ^Bot) {
 		fish_castSkill("9", bot)
 		fishing_state.lineBuff = false
 		fishing_state.lineCast = time.now()
-		sleep(1000)
+		bot.next_action = get_sleep_time(1000)
+		return
 	}
 	if fishing_state.baitSkill {
 		fish_castSkill("3", bot)
 		fishing_state.baitSkill = false
 		fishing_state.baitCast = time.now()
-		sleep(1000)
-		if fishing_state.outOfBaits {
-			if fishing_state.proCastLine {
-				fish_castSkill("10", bot)
-			} else {
-				fish_castSkill("1", bot)
-			}
-			return
-		}
+		bot.next_action = get_sleep_time(1000)
+		return
 	}
 	if fishing_state.outOfBaits {return}
 	if fishing_state.proCastLine {
 		fish_castSkill("10", bot)
 		fishing_state.proCastLine = false
 		fishing_state.proCastLineCD = time.now()
+		bot.next_action = get_sleep_time(1000)
+		fishing_state.needs_cast = false
 		return
 	}
 	fish_castSkill("1", bot)
+	bot.next_action = get_sleep_time(1000)
+	fishing_state.needs_cast = false
 }
 
 fish_castSkill :: proc(skillID: string, bot: ^Bot) {

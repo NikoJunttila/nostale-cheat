@@ -2,6 +2,7 @@
 package payload
 
 import "core:fmt"
+import "core:math/rand"
 import "core:time"
 
 BotState :: union {
@@ -24,6 +25,7 @@ Bot :: struct {
 	mode:          Mode,
 	state:         BotState,
 	last_activity: time.Time,
+	next_action:   time.Time,
 }
 
 init_bot :: proc() -> Bot {
@@ -49,14 +51,34 @@ init_bot :: proc() -> Bot {
 		log_warn("failed to get packetlogger addresses")
 	}
 	bot := Bot {
-		playerID = fmt.aprintf("%d", id^),
-		playerSP = sp^,
-		stop     = false,
-		mode     = .FISHING,
-		state    = FishingState{},
+		playerID    = fmt.aprintf("%d", id^),
+		playerSP    = sp^,
+		stop        = false,
+		mode        = .FISHING,
+		state       = FishingState{},
+		next_action = time.now(),
 	}
 	update_state(&bot)
 	return bot
+}
+bot_tick :: proc(bot: ^Bot) {
+	if bot.mode == .PAUSED do return
+
+	// If we are still waiting for next_action, do nothing
+	if time.diff(time.now(), bot.next_action) < 0 {
+		return
+	}
+
+	if bot.mode == .FISHING {
+		fishing_state := &bot.state.(FishingState)
+		if fishing_state.needs_cast {
+			fish_checkBuffs(bot)
+		}
+	}
+}
+//delay with min value and extra random value
+get_sleep_time :: proc(durationMS: int) -> time.Time {
+	return time.time_add(time.now(), durationMS)
 }
 
 update_state :: proc(bot: ^Bot) {
@@ -70,10 +92,12 @@ update_state :: proc(bot: ^Bot) {
 			castLine    = true,
 			proCastLine = true,
 			covert      = true,
+			needs_cast  = true,
 		}
 		bot.state = fishing_state
 		fmt.println("fishing_state")
-
+	case .PAUSED:
+		fmt.println("bot is paused")
 	// case .MOB_GRINDING:
 	// 	mob_state := MobGrindingState {
 	// 		health_potion_cd = true,
@@ -90,7 +114,6 @@ update_state :: proc(bot: ^Bot) {
 	// 	fmt.println("auto joining IC")
 	// 	bot.state = DPS_state
 	// case .ICE_FLOWER:
-	case .PAUSED:
-		fmt.println("bot is paused")
+
 	}
 }

@@ -15,6 +15,13 @@ EPacketType :: enum {
 	PTReceive,
 	PTSend,
 }
+
+GURI :: "guri"
+SAYI :: "sayi"
+SU :: "su"
+
+important_packets := []string{GURI, SAYI, SU}
+
 //
 // pattern_playerID := []byte {
 // 	0xA1,

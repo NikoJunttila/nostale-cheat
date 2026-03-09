@@ -1,6 +1,7 @@
 #+build windows
 package payload
 
+import "core:slice"
 import "core:strings"
 // import "core:thread"
 import "core:time"
@@ -21,16 +22,20 @@ actual_main :: proc() {
 		for !empty(&packet_queue) {
 			packet, q_ok := front(&packet_queue)
 			if q_ok {
-				log_info(packet)
 				words := strings.split(packet, " ")
-				handle_fishing_packet(&bot, words)
+				if slice.contains(important_packets, words[0]) {
+					log_info(packet)
+					handle_fishing_packet(&bot, words)
+				}
 			}
 			pop(&packet_queue)
 		}
 
-		time.sleep(100 * time.Millisecond)
+		bot_tick(&bot)
+
+		time.sleep(50 * time.Millisecond)
 		iteration += 1
-		if iteration % 50 == 0 {
+		if iteration % 250 == 0 {
 			log_info("heartbeat")
 		}
 	}
