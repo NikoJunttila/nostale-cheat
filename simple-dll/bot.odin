@@ -66,10 +66,8 @@ init_bot :: proc() {
 		state    = FishingState{},
 	}
 	update_state()
-	last_tick_time = time.now()
 }
 
-last_tick_time: time.Time
 
 bot_tick :: proc() {
 	if bot.mode == .PAUSED do return
@@ -83,11 +81,6 @@ bot_tick :: proc() {
 			ordered_remove(&bot.skill_que, 0)
 		}
 	}
-	// calculate time between ticks
-	if bot.currentDelay > time.Millisecond * 50 {
-		bot.currentDelay -= time.since(last_tick_time)
-	}
-	last_tick_time = time.now()
 }
 
 castSkill :: proc(skillID: string) {

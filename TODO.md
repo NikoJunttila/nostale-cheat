@@ -4,6 +4,8 @@ skills get casted too often? mby packets are red multiple times? limit casting s
 
 start with toggling state using keybinds
 
+afk check
+
 GUI?
 
 ring buffer queue instead of the safe que currently (most likely unnecessary as speed is not that crucial here?)
