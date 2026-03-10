@@ -22,6 +22,7 @@ Mode :: enum {
 Skill_que :: struct {
 	skill:    string,
 	castTime: time.Time,
+	delay:    time.Duration,
 }
 
 Bot :: struct {
@@ -74,11 +75,11 @@ bot_tick :: proc() {
 	if bot.mode == .PAUSED do return
 	if len(bot.skill_que) != 0 {
 		next := bot.skill_que[0]
-		log_info("comparing bot tick times")
 		if time.since(next.castTime) > 0 {
 			log_info("casting a skill from que")
 			castSkill(next.skill)
 			bot.last_activity = time.now()
+			bot.currentDelay -= next.delay
 			ordered_remove(&bot.skill_que, 0)
 		}
 	}
@@ -110,17 +111,14 @@ bot_afk_check :: proc() {
 }
 
 add_bot_skill_que :: proc(waitMS: int, skill: string) {
-	semiRandomMS := time.Duration(iteration) + time.Duration(waitMS)
-	// if bot currentDelay is positive add that to the timer
-	totalTime: time.Duration
-	if bot.currentDelay < time.Millisecond * 50 {
-		totalTime = bot.currentDelay + semiRandomMS
-	}
-	bot.currentDelay += semiRandomMS
-	skill_call_time := time.time_add(time.now(), time.Duration(waitMS))
+	delay := time.Duration(waitMS) * time.Millisecond + time.Duration(iteration)
+	bot.currentDelay += delay
+	// Schedule relative to now + total accumulated delay so skills fire sequentially
+	skill_call_time := time.time_add(time.now(), bot.currentDelay)
 	item := Skill_que {
 		castTime = skill_call_time,
 		skill    = skill,
+		delay    = delay,
 	}
 	append(&bot.skill_que, item)
 }

@@ -19,8 +19,9 @@ EPacketType :: enum {
 GURI :: "guri"
 SAYI :: "sayi"
 SU :: "su"
+SR :: "sr"
 
-important_packets := []string{GURI, SAYI, SU}
+important_packets := []string{GURI, SAYI, SU, SR}
 
 //
 // pattern_playerID := []byte {

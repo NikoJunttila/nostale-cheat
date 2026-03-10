@@ -27,6 +27,7 @@ actual_main :: proc() {
 				if slice.contains(important_packets, words[0]) {
 					handle_fishing_packet(words)
 				}
+				delete(words)
 			}
 			pop(&packet_queue)
 		}
@@ -41,7 +42,8 @@ actual_main :: proc() {
 				len(packet_queue.queue),
 				len(bot.skill_que),
 			)
-			log_info("heartbeat")
+			log_info(log_message)
+			delete(log_message)
 			iteration = 1
 		}
 	}

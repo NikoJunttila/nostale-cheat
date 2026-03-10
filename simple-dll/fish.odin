@@ -30,14 +30,20 @@ handle_fishing_packet :: proc(words: []string) {
 		fish_handleSayi(words)
 	case SU:
 		fish_handleSU3(words)
+	case SR:
+		fish_handleSR(words)
 	}
 }
 
 fish_handleGURI :: proc(line: []string) {
 	if len(line) < 6 {return}
 	if line[3] != bot.playerID {return}
-	log_info("handling guri")
 	fishing_state := &bot.state.(FishingState)
+	log_info(fmt.tprintf("guri line spotted %s", line[4]))
+	if len(bot.skill_que) > 0 {
+		log_info("early return in guri")
+		return
+	}
 	switch line[4] {
 	case "30":
 		castSkill("2")
@@ -45,7 +51,6 @@ fish_handleGURI :: proc(line: []string) {
 		fish_str := fmt.aprintf("fish: %d", fishing_state.fish_caught)
 		log_info(fish_str)
 		delete(fish_str)
-		log_info("waiting after fish caught")
 		fish_checkBuffs()
 	case "31":
 		log_info("legendary fish!!")
@@ -78,18 +83,17 @@ fish_handleSayi :: proc(line: []string) {
 		log_info("out of baits")
 	}
 }
-fish_handleSR :: proc(skillID: string) {
-	if bot.mode != .FISHING {return}
+fish_handleSR :: proc(words: []string) {
+	if bot.mode != .FISHING || len(words) < 2 do return
 	fishing_state := &bot.state.(FishingState)
+	skillID := words[1]
+	log_info(fmt.tprintf("reset skill %s", skillID))
 
 	switch skillID {
 	case "1":
 		fishing_state.castLine = true
 	case "3":
 		fishing_state.baitSkill = true
-		if fishing_state.outOfBaits {
-			fish_checkBuffs()
-		}
 	case "8":
 		fishing_state.expBuff = true
 	case "5":
@@ -103,32 +107,28 @@ fish_handleSR :: proc(skillID: string) {
 fish_checkBuffs :: proc() {
 	if bot.mode != .FISHING {return}
 	fishing_state := &bot.state.(FishingState)
-
+	if fishing_state.outOfBaits {return}
 	//lvl45 no need for exp
 	if fishing_state.expBuff && bot.playerSP < 45 {
-		add_bot_skill_que(3000, "8")
+		add_bot_skill_que(5000, "8")
 		fishing_state.expBuff = false
 	}
 	if fishing_state.lineBuff {
-		add_bot_skill_que(3000, "9")
+		add_bot_skill_que(5000, "9")
 		fishing_state.lineBuff = false
 		fishing_state.lineCast = time.now()
-		return
 	}
 	if fishing_state.baitSkill {
-		add_bot_skill_que(3000, "3")
+		add_bot_skill_que(5000, "3")
 		fishing_state.baitSkill = false
 		fishing_state.baitCast = time.now()
-		return
 	}
-	if fishing_state.outOfBaits {return}
 	if fishing_state.proCastLine {
-		add_bot_skill_que(3000, "10")
+		add_bot_skill_que(5000, "10")
 		fishing_state.proCastLine = false
 		fishing_state.proCastLineCD = time.now()
-		return
 	}
-	add_bot_skill_que(3000, "1")
+	add_bot_skill_que(4000, "1")
 }
 
 
