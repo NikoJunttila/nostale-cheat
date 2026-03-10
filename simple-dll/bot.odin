@@ -11,6 +11,7 @@ BotState :: union {
 	// IceFlowerState,
 	// DPSCheckState,
 }
+
 Mode :: enum {
 	PAUSED,
 	FISHING,
@@ -18,6 +19,12 @@ Mode :: enum {
 	ICE_FLOWER,
 	MOB_GRINDING,
 }
+
+Skill_que: struct {
+	skill:    string,
+	castTime: time.Time,
+}
+
 Bot :: struct {
 	playerID:      string,
 	playerSP:      u8,
@@ -25,10 +32,13 @@ Bot :: struct {
 	mode:          Mode,
 	state:         BotState,
 	last_activity: time.Time,
-	next_action:   time.Time,
+	currentDelay:  time.Time,
+	skill_que:     [dynamic]Skill_que,
 }
 
-init_bot :: proc() -> Bot {
+bot: Bot
+
+init_bot :: proc() {
 	modinfo := getModuleInfo()
 	id, ok := get_player_id_internal(cast(^u8)modinfo.lpBaseOfDll, u32(modinfo.SizeOfImage))
 	if ok {
@@ -50,7 +60,7 @@ init_bot :: proc() -> Bot {
 	} else {
 		log_warn("failed to get packetlogger addresses")
 	}
-	bot := Bot {
+	bot = Bot {
 		playerID    = fmt.aprintf("%d", id^),
 		playerSP    = sp^,
 		stop        = false,
@@ -58,30 +68,54 @@ init_bot :: proc() -> Bot {
 		state       = FishingState{},
 		next_action = time.now(),
 	}
-	update_state(&bot)
-	return bot
+	update_state()
+	last_time = time.now()
 }
-bot_tick :: proc(bot: ^Bot) {
+
+last_time: time.Time
+
+bot_tick :: proc() {
 	if bot.mode == .PAUSED do return
-
-	// If we are still waiting for next_action, do nothing
-	if time.diff(time.now(), bot.next_action) < 0 {
-		return
-	}
-
-	if bot.mode == .FISHING {
-		fishing_state := &bot.state.(FishingState)
-		if fishing_state.needs_cast {
-			fish_checkBuffs(bot)
+	if len(bot.skill_que) != 0 {
+		next := bot.skill_que[0]
+		if next.castTime < time.now() {
+			castSkill(next.skill)
+			ordered_remove(&bot.skill_que, 0)
 		}
 	}
-}
-//delay with min value and extra random value
-get_sleep_time :: proc(durationMS: int) -> time.Time {
-	return time.time_add(time.now(), durationMS)
+	// calculate time between ticks
+	time_between_ticks := time.Now() - last_time
+	if bot.currentDelay < time.Millisecond * 50 {
+		bot.currentDelay -= time_between_ticks
+	}
+	last_time = time.now()
 }
 
-update_state :: proc(bot: ^Bot) {
+castSkill :: proc(skillID: string, bot: ^Bot) {
+	bot.last_activity = time.now()
+	skill_packet := fmt.aprintf("u_s %s 1 %s", skillID, bot.playerID)
+	log_info(fmt.tprintf("casting skill %s", skill_packet))
+	send_packet(skill_packet)
+	delete(skill_packet)
+}
+
+add_bot_skill_que :: proc(waitMS: int, skill: string) {
+	semiRandomMS := time.Duration(iteration) + time.Duration(waitMS)
+	// if bot currentDelay is positive add that to the timer
+	totalTime: time.Time
+	if bot.currentDelay < time.Millisecond * 50 {
+		totalTime = bot.currentDelay + semiRandomMS
+	}
+	bot.currentDelay += semiRandomMS
+	skill_call_time := time.time_add(time.now(), time.Duration(durationMS))
+	item := Skill_que {
+		castTime = skill_call_time,
+		skill    = skill,
+	}
+	append(&bot.skill_que, item)
+}
+
+update_state :: proc() {
 	bot.last_activity = time.now()
 	#partial switch bot.mode {
 	case .FISHING:
@@ -114,6 +148,5 @@ update_state :: proc(bot: ^Bot) {
 	// 	fmt.println("auto joining IC")
 	// 	bot.state = DPS_state
 	// case .ICE_FLOWER:
-
 	}
 }

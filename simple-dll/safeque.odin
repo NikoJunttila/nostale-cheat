@@ -43,15 +43,3 @@ empty :: proc(q: ^SafeQueue) -> bool {
 
 	return len(q.queue) == 0
 }
-
-// queue: SafeQueue
-//
-// push(&queue, "hello")
-// push(&queue, "packet2")
-//
-// packet, ok := front(&queue)
-// if ok {
-// 	fmt.println(packet)
-// }
-//
-// pop(&queue)
