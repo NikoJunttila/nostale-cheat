@@ -1,15 +1,9 @@
-really nice que for bot skills
+really nice que for bot skills (progress)
 
-log the sent packets also?
-
-packet filtering?
+start with toggling state using keybinds
 
 GUI?
 
-actual fish bot implementation?
+ring buffer queue instead of the safe que currently (most likely unnecessary as speed is not that crucial here?)
 
-ring buffer queue instead of the safe que currently
 
-update bot to be global, create a new thread for important packets that the fish then handle and here we can sleep with  Windows, the Sleep() function is part of kernel32.dll
-
-currently math/random crashesh the game??? so just call times without random

@@ -28,7 +28,6 @@ Skill_que: struct {
 Bot :: struct {
 	playerID:      string,
 	playerSP:      u8,
-	stop:          bool,
 	mode:          Mode,
 	state:         BotState,
 	last_activity: time.Time,
@@ -63,7 +62,6 @@ init_bot :: proc() {
 	bot = Bot {
 		playerID    = fmt.aprintf("%d", id^),
 		playerSP    = sp^,
-		stop        = false,
 		mode        = .FISHING,
 		state       = FishingState{},
 		next_action = time.now(),
@@ -80,12 +78,13 @@ bot_tick :: proc() {
 		next := bot.skill_que[0]
 		if next.castTime < time.now() {
 			castSkill(next.skill)
+			bot.last_activity = time.now()
 			ordered_remove(&bot.skill_que, 0)
 		}
 	}
 	// calculate time between ticks
-	time_between_ticks := time.Now() - last_time
-	if bot.currentDelay < time.Millisecond * 50 {
+	if bot.currentDelay > time.Millisecond * 50 {
+		time_between_ticks := time.Now() - last_time
 		bot.currentDelay -= time_between_ticks
 	}
 	last_time = time.now()
@@ -97,6 +96,18 @@ castSkill :: proc(skillID: string, bot: ^Bot) {
 	log_info(fmt.tprintf("casting skill %s", skill_packet))
 	send_packet(skill_packet)
 	delete(skill_packet)
+}
+
+bot_afk_check :: proc() {
+	if bot.mode == .PAUSED do return
+	since_last_action := time.now() - bot.last_activity
+	if since_last_action < time.Minute * 5 do return
+	// reset skills and start again.
+	#partial switch bot.mode {
+	case .FISHING:
+		fish_reset_skills()
+		castSkill("2")
+	}
 }
 
 add_bot_skill_que :: proc(waitMS: int, skill: string) {

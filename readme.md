@@ -16,6 +16,6 @@ The injected DLL now emits diagnostics through `OutputDebugStringA` so you can v
 4. When DebugView shows the logs, you know the DLL is executing without touching the host process.
 
 
-## current progress
+## dll payload docs 
 
-packetlogger with send and recv client side packets
+currently math/random crashesh the game??? so just call times without random
