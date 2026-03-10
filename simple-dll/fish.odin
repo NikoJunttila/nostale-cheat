@@ -64,6 +64,34 @@ fish_handleGURI :: proc(line: []string) {
 	}
 }
 
+fish_checkBuffs :: proc() {
+	if bot.mode != .FISHING {return}
+	fishing_state := &bot.state.(FishingState)
+	if fishing_state.outOfBaits {return}
+	//lvl45 no need for exp
+	if fishing_state.expBuff && bot.playerSP < 45 {
+		add_bot_skill_que(5000, "8")
+		fishing_state.expBuff = false
+	}
+	if fishing_state.lineBuff {
+		add_bot_skill_que(5000, "9")
+		fishing_state.lineBuff = false
+		fishing_state.lineCast = time.now()
+	}
+	if fishing_state.baitSkill {
+		add_bot_skill_que(5000, "3")
+		fishing_state.baitSkill = false
+		fishing_state.baitCast = time.now()
+	}
+	if fishing_state.proCastLine {
+		add_bot_skill_que(5000, "10")
+		fishing_state.proCastLine = false
+		fishing_state.proCastLineCD = time.now()
+		return
+	}
+	add_bot_skill_que(1000, "1")
+}
+
 fish_handleSU3 :: proc(line: []string) {
 	if len(line) < 18 do return
 	if line[1] != "3" {return}
@@ -104,32 +132,7 @@ fish_handleSR :: proc(words: []string) {
 		fishing_state.proCastLine = true
 	}
 }
-fish_checkBuffs :: proc() {
-	if bot.mode != .FISHING {return}
-	fishing_state := &bot.state.(FishingState)
-	if fishing_state.outOfBaits {return}
-	//lvl45 no need for exp
-	if fishing_state.expBuff && bot.playerSP < 45 {
-		add_bot_skill_que(5000, "8")
-		fishing_state.expBuff = false
-	}
-	if fishing_state.lineBuff {
-		add_bot_skill_que(5000, "9")
-		fishing_state.lineBuff = false
-		fishing_state.lineCast = time.now()
-	}
-	if fishing_state.baitSkill {
-		add_bot_skill_que(5000, "3")
-		fishing_state.baitSkill = false
-		fishing_state.baitCast = time.now()
-	}
-	if fishing_state.proCastLine {
-		add_bot_skill_que(5000, "10")
-		fishing_state.proCastLine = false
-		fishing_state.proCastLineCD = time.now()
-	}
-	add_bot_skill_que(4000, "1")
-}
+
 
 
 fish_reset_skills :: proc() {
