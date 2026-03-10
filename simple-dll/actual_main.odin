@@ -27,7 +27,7 @@ actual_main :: proc() {
 				if slice.contains(important_packets, words[0]) {
 					handle_fishing_packet(words)
 				}
-				delete(words)
+				//delete(words) //might cause errors? will cause memory leak if not cleaned up?
 			}
 			pop(&packet_queue)
 		}
