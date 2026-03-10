@@ -1,6 +1,6 @@
-really nice que for bot skills (progress)
+really nice que for bot skills (done)
 
-skills get casted too often? mby packets are red multiple times? limit casting skills?
+admin checks and show map when moving in pause mode.
 
 start with toggling state using keybinds
 

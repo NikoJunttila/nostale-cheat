@@ -4,14 +4,33 @@ package payload
 import "core:fmt"
 import "core:slice"
 import "core:strings"
-// import "core:thread"
 import "core:time"
+import win "core:sys/windows"
 
 // LPTHREAD_START_ROUTINE :: #type proc "stdcall" (parameter: rawptr) -> u32
 global_addrs: packetlogger_addrs
 packet_queue: SafeQueue
 
-iteration := 0
+f5_was_down := false
+iteration   := 0
+
+handle_hotkeys :: proc() {
+	is_down := (u16(win.GetAsyncKeyState(win.VK_F5)) & 0x8000) != 0
+	if is_down && !f5_was_down {
+		if bot.mode == .PAUSED {
+			bot.mode = .FISHING
+			update_state()
+			log_info("[F5] resumed fishing")
+		} else {
+			bot.mode = .PAUSED
+			// flush any queued skills
+			clear(&bot.skill_que)
+			bot.currentDelay = 0
+			log_info("[F5] paused")
+		}
+	}
+	f5_was_down = is_down
+}
 actual_main :: proc() {
 	log_info("payload main entered")
 
@@ -33,6 +52,7 @@ actual_main :: proc() {
 		}
 
 		bot_tick()
+		handle_hotkeys()
 
 		time.sleep(50 * time.Millisecond)
 		iteration += 1
