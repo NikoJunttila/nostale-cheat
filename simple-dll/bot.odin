@@ -2,7 +2,6 @@
 package payload
 
 import "core:fmt"
-import "core:math/rand"
 import "core:time"
 
 BotState :: union {
@@ -20,7 +19,7 @@ Mode :: enum {
 	MOB_GRINDING,
 }
 
-Skill_que: struct {
+Skill_que :: struct {
 	skill:    string,
 	castTime: time.Time,
 }
@@ -31,7 +30,7 @@ Bot :: struct {
 	mode:          Mode,
 	state:         BotState,
 	last_activity: time.Time,
-	currentDelay:  time.Time,
+	currentDelay:  time.Duration,
 	skill_que:     [dynamic]Skill_que,
 }
 
@@ -60,23 +59,24 @@ init_bot :: proc() {
 		log_warn("failed to get packetlogger addresses")
 	}
 	bot = Bot {
-		playerID    = fmt.aprintf("%d", id^),
-		playerSP    = sp^,
-		mode        = .FISHING,
-		state       = FishingState{},
-		next_action = time.now(),
+		playerID = fmt.aprintf("%d", id^),
+		playerSP = sp^,
+		mode     = .FISHING,
+		state    = FishingState{},
 	}
 	update_state()
-	last_time = time.now()
+	last_tick_time = time.now()
 }
 
-last_time: time.Time
+last_tick_time: time.Time
 
 bot_tick :: proc() {
 	if bot.mode == .PAUSED do return
 	if len(bot.skill_que) != 0 {
 		next := bot.skill_que[0]
-		if next.castTime < time.now() {
+		log_info("comparing bot tick times")
+		if time.since(next.castTime) > 0 {
+			log_info("casting a skill from que")
 			castSkill(next.skill)
 			bot.last_activity = time.now()
 			ordered_remove(&bot.skill_que, 0)
@@ -84,13 +84,12 @@ bot_tick :: proc() {
 	}
 	// calculate time between ticks
 	if bot.currentDelay > time.Millisecond * 50 {
-		time_between_ticks := time.Now() - last_time
-		bot.currentDelay -= time_between_ticks
+		bot.currentDelay -= time.since(last_tick_time)
 	}
-	last_time = time.now()
+	last_tick_time = time.now()
 }
 
-castSkill :: proc(skillID: string, bot: ^Bot) {
+castSkill :: proc(skillID: string) {
 	bot.last_activity = time.now()
 	skill_packet := fmt.aprintf("u_s %s 1 %s", skillID, bot.playerID)
 	log_info(fmt.tprintf("casting skill %s", skill_packet))
@@ -100,7 +99,7 @@ castSkill :: proc(skillID: string, bot: ^Bot) {
 
 bot_afk_check :: proc() {
 	if bot.mode == .PAUSED do return
-	since_last_action := time.now() - bot.last_activity
+	since_last_action := time.since(bot.last_activity)
 	if since_last_action < time.Minute * 5 do return
 	// reset skills and start again.
 	#partial switch bot.mode {
@@ -113,12 +112,12 @@ bot_afk_check :: proc() {
 add_bot_skill_que :: proc(waitMS: int, skill: string) {
 	semiRandomMS := time.Duration(iteration) + time.Duration(waitMS)
 	// if bot currentDelay is positive add that to the timer
-	totalTime: time.Time
+	totalTime: time.Duration
 	if bot.currentDelay < time.Millisecond * 50 {
 		totalTime = bot.currentDelay + semiRandomMS
 	}
 	bot.currentDelay += semiRandomMS
-	skill_call_time := time.time_add(time.now(), time.Duration(durationMS))
+	skill_call_time := time.time_add(time.now(), time.Duration(waitMS))
 	item := Skill_que {
 		castTime = skill_call_time,
 		skill    = skill,
@@ -137,7 +136,6 @@ update_state :: proc() {
 			castLine    = true,
 			proCastLine = true,
 			covert      = true,
-			needs_cast  = true,
 		}
 		bot.state = fishing_state
 		fmt.println("fishing_state")

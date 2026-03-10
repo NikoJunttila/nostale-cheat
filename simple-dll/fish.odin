@@ -19,14 +19,12 @@ FishingState :: struct {
 	proCastLine:   bool,
 	proCastLineCD: time.Time,
 	covert:        bool,
-	needs_cast:    bool,
 }
 
 // Fishing mode packet handler
 handle_fishing_packet :: proc(words: []string) {
 	switch words[0] {
 	case GURI:
-		log_info("handling guri")
 		fish_handleGURI(words)
 	case SAYI:
 		fish_handleSayi(words)
@@ -38,6 +36,7 @@ handle_fishing_packet :: proc(words: []string) {
 fish_handleGURI :: proc(line: []string) {
 	if len(line) < 6 {return}
 	if line[3] != bot.playerID {return}
+	log_info("handling guri")
 	fishing_state := &bot.state.(FishingState)
 	switch line[4] {
 	case "30":
@@ -47,7 +46,7 @@ fish_handleGURI :: proc(line: []string) {
 		log_info(fish_str)
 		delete(fish_str)
 		log_info("waiting after fish caught")
-		fishing_state.needs_cast = true
+		fish_checkBuffs()
 	case "31":
 		log_info("legendary fish!!")
 		castSkill("2")
@@ -56,7 +55,7 @@ fish_handleGURI :: proc(line: []string) {
 		fish_str := fmt.aprintf("fish: %d", fishing_state.fish_caught)
 		log_info(fish_str)
 		delete(fish_str)
-		fishing_state.needs_cast = true
+		fish_checkBuffs()
 	}
 }
 
@@ -127,11 +126,9 @@ fish_checkBuffs :: proc() {
 		add_bot_skill_que(3000, "10")
 		fishing_state.proCastLine = false
 		fishing_state.proCastLineCD = time.now()
-		fishing_state.needs_cast = false
 		return
 	}
 	add_bot_skill_que(3000, "1")
-	fishing_state.needs_cast = false
 }
 
 

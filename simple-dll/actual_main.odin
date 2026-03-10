@@ -25,19 +25,22 @@ actual_main :: proc() {
 			if q_ok {
 				words := strings.split(packet, " ")
 				if slice.contains(important_packets, words[0]) {
-					log_info(packet)
 					handle_fishing_packet(words)
 				}
 			}
 			pop(&packet_queue)
 		}
 
-		bot_tick(&bot)
+		bot_tick()
 
 		time.sleep(50 * time.Millisecond)
 		iteration += 1
 		if iteration % 1000 == 0 {
-			log_message := fmt.aprintf("p que: %d, %d que", len(packet_queue), len(bot.skill_que))
+			log_message := fmt.aprintf(
+				"p que: %d, %d que",
+				len(packet_queue.queue),
+				len(bot.skill_que),
+			)
 			log_info("heartbeat")
 			iteration = 1
 		}
