@@ -14,11 +14,9 @@ FishingState :: struct {
 	lineCast:      time.Time,
 	baitSkill:     bool,
 	baitCast:      time.Time,
-	castLine:      bool,
 	outOfBaits:    bool,
 	proCastLine:   bool,
 	proCastLineCD: time.Time,
-	covert:        bool,
 }
 
 // Fishing mode packet handler
@@ -56,7 +54,9 @@ fish_handleGURI :: proc(line: []string) {
 		log_info("legendary fish!!")
 		fishing_state.fish_caught += 1
 		fishing_state.leg_fish += 1
-		log_info(fmt.tprintf("fish: %d leg: %d", fishing_state.fish_caught, fishing_state.leg_fish))
+		log_info(
+			fmt.tprintf("fish: %d leg: %d", fishing_state.fish_caught, fishing_state.leg_fish),
+		)
 		// Queue: pick up fish, then run the full buff+cast chain
 		add_bot_skill_que(200, "2")
 		fish_startFishing()
@@ -108,7 +108,7 @@ fish_startFishing :: proc() {
 	}
 
 	// Plain cast line
-	add_bot_skill_que(5000, "1")
+	add_bot_skill_que(5500, "1")
 }
 
 // SU 3 <casterID> ... <skillID> → skill went on cooldown
@@ -141,12 +141,10 @@ fish_handleSR :: proc(words: []string) {
 	if bot.mode != .FISHING || len(words) < 2 do return
 	fishing_state := &bot.state.(FishingState)
 	skillID := words[1]
-	log_info(fmt.tprintf("reset skill %s", skillID))
 
 	switch skillID {
-	case "1":
-		fishing_state.castLine = true
 	case "3":
+		log_info(fmt.tprintf("reset skill %s", skillID))
 		fishing_state.baitSkill = true
 		// Mirror reference: if we ran out of baits and bait skill is now ready, restart
 		if fishing_state.outOfBaits && len(bot.skill_que) == 0 {
@@ -155,11 +153,11 @@ fish_handleSR :: proc(words: []string) {
 		}
 	case "8":
 		fishing_state.expBuff = true
-	case "5":
-		fishing_state.covert = true
 	case "9":
+		log_info(fmt.tprintf("reset skill %s", skillID))
 		fishing_state.lineBuff = true
 	case "10":
+		log_info(fmt.tprintf("reset skill %s", skillID))
 		fishing_state.proCastLine = true
 	}
 }

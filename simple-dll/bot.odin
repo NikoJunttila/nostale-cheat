@@ -124,9 +124,7 @@ update_state :: proc() {
 			expBuff     = true,
 			lineBuff    = true,
 			baitSkill   = true,
-			castLine    = true,
 			proCastLine = true,
-			covert      = true,
 		}
 		bot.state = fishing_state
 		fmt.println("fishing_state")

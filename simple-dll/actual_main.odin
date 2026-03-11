@@ -2,17 +2,16 @@
 package payload
 
 import "core:fmt"
-import "core:slice"
 import "core:strings"
-import "core:time"
 import win "core:sys/windows"
+import "core:time"
 
 // LPTHREAD_START_ROUTINE :: #type proc "stdcall" (parameter: rawptr) -> u32
 global_addrs: packetlogger_addrs
 packet_queue: SafeQueue
 
 f5_was_down := false
-iteration   := 0
+iteration := 0
 
 handle_hotkeys :: proc() {
 	is_down := (u16(win.GetAsyncKeyState(win.VK_F5)) & 0x8000) != 0
@@ -42,11 +41,14 @@ actual_main :: proc() {
 		for !empty(&packet_queue) {
 			packet, q_ok := front(&packet_queue)
 			if q_ok {
-				words := strings.split(packet, " ")
-				if slice.contains(important_packets, words[0]) {
-					handle_fishing_packet(words)
+				for p in important_packets {
+					if strings.contains(packet, p) {
+						log_info(packet)
+						words := strings.split(packet, " ")
+						handle_fishing_packet(words)
+						//delete(words) //might cause errors? will cause memory leak if not cleaned up?
+					}
 				}
-				//delete(words) //might cause errors? will cause memory leak if not cleaned up?
 			}
 			pop(&packet_queue)
 		}
@@ -57,6 +59,7 @@ actual_main :: proc() {
 		time.sleep(50 * time.Millisecond)
 		iteration += 1
 		if iteration % 1000 == 0 {
+			check_afk()
 			log_message := fmt.aprintf(
 				"p que: %d, %d que",
 				len(packet_queue.queue),
