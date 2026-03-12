@@ -1,15 +1,11 @@
-afk check.
-
-skill resets dont work.
-
 terminal logs also working? or other ways to see logs in linux?
 
-admin checks and show map when moving in pause mode.
+sound alerts or other alerts for map changes / admin notice?
 
 GUI?
 
 really nice que for bot skills (done)
 
-ring buffer queue instead of the safe que currently (most likely unnecessary as speed is not that crucial here?)
+dps mode for ic/ac?
 
-chrono break for the new game
+ring buffer queue instead of the safe que currently (most likely unnecessary as speed is not that crucial here?)

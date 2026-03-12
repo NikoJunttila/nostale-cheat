@@ -6,7 +6,6 @@ import "core:strings"
 import win "core:sys/windows"
 import "core:time"
 
-// LPTHREAD_START_ROUTINE :: #type proc "stdcall" (parameter: rawptr) -> u32
 global_addrs: packetlogger_addrs
 packet_queue: SafeQueue
 
@@ -21,15 +20,12 @@ handle_hotkeys :: proc() {
 			update_state()
 			log_info("[F5] resumed fishing")
 		} else {
-			bot.mode = .PAUSED
-			// flush any queued skills
-			clear(&bot.skill_que)
-			bot.currentDelay = 0
-			log_info("[F5] paused")
+			bot_pause()
 		}
 	}
 	f5_was_down = is_down
 }
+
 actual_main :: proc() {
 	log_info("payload main entered")
 
@@ -45,7 +41,7 @@ actual_main :: proc() {
 					if strings.contains(packet, p) {
 						log_info(packet)
 						words := strings.split(packet, " ")
-						handle_fishing_packet(words)
+						handle_packet(words)
 						//delete(words) //might cause errors? will cause memory leak if not cleaned up?
 					}
 				}

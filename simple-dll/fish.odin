@@ -30,6 +30,10 @@ handle_fishing_packet :: proc(words: []string) {
 		fish_handleSU3(words)
 	case SR:
 		fish_handleSR(words)
+	case IN:
+		handleIN(words)
+	case C_MAP:
+		handleC_map(words)
 	}
 }
 
@@ -118,6 +122,7 @@ fish_handleSU3 :: proc(line: []string) {
 	if line[4] != bot.playerID {return}
 	bot.mode = .PAUSED
 	log_info("bot paused due to damage")
+	alert()
 }
 
 // SAYI 1 <playerID> ... 2497 → out of baits
