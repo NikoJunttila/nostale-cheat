@@ -1,3 +1,4 @@
+#+build windows
 package payload
 
 import "core:fmt"
@@ -23,5 +24,23 @@ setup_console :: proc() {
 	os.stdin = os.Handle(setdin)
 	os.stdout = os.Handle(stout)
 	os.stderr = os.Handle(sterr)
-	SetConsoleTitle("fish bot\x00")
+	SetConsoleTitle("fish bot\x00") // this creates the console and makes correct title but no stouts get logged
+	fmt.println("made new console")
+}
+
+alert :: proc() {
+	log_warn("alert!!!")
+	winstring := win.utf8_to_wstring("admin alert")
+	winTitle := win.utf8_to_wstring("admin alert")
+	win.MessageBoxW(nil, winstring, winTitle, win.MB_OK)
+	play_alert_sound()
+}
+
+play_alert_sound() :: proc() {
+	// only .wav files
+	// PlaySoundW :: proc(pszSound: LPCWSTR, hmod: HMODULE, fdwSound: DWORD) -> BOOL ---
+	ok := win.PlaySoundW("alert.wav", nil, win.SND_FILENAME | win.SND_ASYNC)
+	if !ok {
+		log_warn("failed to play alert sound")
+	}
 }

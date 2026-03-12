@@ -201,10 +201,6 @@ bot_pause :: proc() {
 	log_info("[F5] paused")
 }
 
-alert :: proc() {
-	log_warn("alert!!!")
-}
-
 // should find admin entrance but not really. useless at the moment for this purpose.
 // TODO: log all in entries to a file so we can analyze them?
 handleIN :: proc(line: []string) {
