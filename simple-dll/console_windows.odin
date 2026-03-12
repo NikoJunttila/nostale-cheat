@@ -36,7 +36,7 @@ alert :: proc() {
 	play_alert_sound()
 }
 
-play_alert_sound() :: proc() {
+play_alert_sound :: proc() {
 	// only .wav files
 	// PlaySoundW :: proc(pszSound: LPCWSTR, hmod: HMODULE, fdwSound: DWORD) -> BOOL ---
 	ok := win.PlaySoundW("alert.wav", nil, win.SND_FILENAME | win.SND_ASYNC)
