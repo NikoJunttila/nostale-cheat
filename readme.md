@@ -19,3 +19,5 @@ The injected DLL now emits diagnostics through `OutputDebugStringA` so you can v
 ## dll payload docs 
 
 currently math/random crashesh the game??? so just call times without random
+
+relative sound as alert sound. will break on another path.

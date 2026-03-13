@@ -30,17 +30,24 @@ setup_console :: proc() {
 
 alert :: proc() {
 	log_warn("alert!!!")
-	winstring := win.utf8_to_wstring("admin alert")
-	winTitle := win.utf8_to_wstring("admin alert")
-	win.MessageBoxW(nil, winstring, winTitle, win.MB_OK)
+	// this call blocks the thread? other nicer ways to pop up a alert notice?
+	// winstring := win.utf8_to_wstring("admin alert")
+	// winTitle := win.utf8_to_wstring("admin alert")
+	// win.MessageBoxW(nil, winstring, winTitle, win.MB_OK)
 	play_alert_sound()
 }
 
 play_alert_sound :: proc() {
 	// only .wav files
-	// PlaySoundW :: proc(pszSound: LPCWSTR, hmod: HMODULE, fdwSound: DWORD) -> BOOL ---
-	ok := win.PlaySoundW("alert.wav", nil, win.SND_FILENAME | win.SND_ASYNC)
+	// this is loaded from inside the the program .dll gets injected to and using relative will fail unless its inside the folder actually running game?
+	ok := win.PlaySoundW(
+		`C:\Users\bill\Desktop\Shared\nostale-cheats/alert.wav`,
+		nil,
+		win.SND_FILENAME | win.SND_ASYNC,
+	)
 	if !ok {
 		log_warn("failed to play alert sound")
+	} else {
+		log_info("playing sound")
 	}
 }
