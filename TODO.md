@@ -1,4 +1,6 @@
-GUI?
+sound still kinda broken on linux side.
+
+GUI? possibilities. win32?
 
 dps mode for ic/ac?
 

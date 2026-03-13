@@ -21,3 +21,6 @@ The injected DLL now emits diagnostics through `OutputDebugStringA` so you can v
 currently math/random crashesh the game??? so just call times without random
 
 relative sound as alert sound. will break on another path.
+
+linux side logs
+tail -f /home/derp/.steam/steam/steamapps/compatdata/4240740151/pfx/drive_c/Nostale/payload_debug.log
