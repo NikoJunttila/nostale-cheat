@@ -1,14 +1,14 @@
 package payload
 //
-import "core:time"
 import win "core:sys/windows"
+import "core:time"
 
 LOG_BUFFER_SIZE :: 512
-LOG_PREFIX_INFO  :: "[PAYLOAD] INFO: "
-LOG_PREFIX_WARN  :: "[PAYLOAD] WARN: "
+LOG_PREFIX_INFO :: "[PAYLOAD] INFO: "
+LOG_PREFIX_WARN :: "[PAYLOAD] WARN: "
 LOG_PREFIX_ERROR :: "[PAYLOAD] ERROR: "
 
-VERSION :: "1.0.92"
+VERSION :: "1.0.97"
 
 log_info :: proc(message: string) {
 	log_with_prefix(LOG_PREFIX_INFO, message)
@@ -30,7 +30,7 @@ log_with_prefix :: proc(prefix, message: string) {
 	// Write HH:MM:SS timestamp manually into buffer
 	written := 0
 	write_2digit :: proc(buf: []u8, offset: int, val: int) -> int {
-		buf[offset]     = u8('0' + val / 10)
+		buf[offset] = u8('0' + val / 10)
 		buf[offset + 1] = u8('0' + val % 10)
 		return 2
 	}
@@ -51,9 +51,26 @@ log_with_prefix :: proc(prefix, message: string) {
 	if written > LOG_BUFFER_SIZE - 2 {
 		written = LOG_BUFFER_SIZE - 2
 	}
-	buffer[written]     = '\n'
+	buffer[written] = '\n'
 	buffer[written + 1] = 0
 	win.OutputDebugStringA(cast(win.LPCSTR)&buffer[0])
+
+	// Also write logs to a file in the game's working directory.
+	// This makes it easy to read logs under Proton/Linux without needing to capture stdout or DbgPrint.
+	f := win.CreateFileW(
+		"payload_debug.log",
+		win.FILE_APPEND_DATA,
+		win.FILE_SHARE_READ,
+		nil,
+		win.OPEN_ALWAYS,
+		win.FILE_ATTRIBUTE_NORMAL,
+		nil,
+	)
+	if f != win.INVALID_HANDLE_VALUE {
+		bytes_written: win.DWORD
+		win.WriteFile(f, &buffer[0], u32(written + 1), &bytes_written, nil)
+		win.CloseHandle(f)
+	}
 }
 
 safe_copy :: proc(dst: []u8, src: string, offset: int) -> int {

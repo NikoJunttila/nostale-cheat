@@ -4,6 +4,7 @@ package payload
 import "core:fmt"
 import os "core:os/old"
 import win "core:sys/windows"
+import "core:thread"
 
 foreign import kernel32 "system:Kernel32.lib"
 
@@ -30,11 +31,11 @@ setup_console :: proc() {
 
 alert :: proc() {
 	log_warn("alert!!!")
-	// this call blocks the thread? other nicer ways to pop up a alert notice?
-	// winstring := win.utf8_to_wstring("admin alert")
-	// winTitle := win.utf8_to_wstring("admin alert")
-	// win.MessageBoxW(nil, winstring, winTitle, win.MB_OK)
 	play_alert_sound()
+	// Create a new thread so the MessageBox doesn't block the main generic payload execution.
+	winstring := win.utf8_to_wstring("admin alert")
+	winTitle := win.utf8_to_wstring("admin alert")
+	win.MessageBoxW(nil, winstring, winTitle, win.MB_OK | win.MB_TOPMOST | win.MB_ICONWARNING)
 }
 
 play_alert_sound :: proc() {

@@ -1,7 +1,3 @@
-terminal logs also working? or other ways to see logs in linux?
-
-sound alerts or other alerts for map changes / admin notice?
-
 GUI?
 
 dps mode for ic/ac?

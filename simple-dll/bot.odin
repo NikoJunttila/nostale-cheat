@@ -188,8 +188,8 @@ handleC_map :: proc(words: []string) {
 		}
 	case .FISHING, .ICE_FLOWER, .MOB_GRINDING:
 		log_info("admin alert")
-		alert()
 		bot_pause()
+		alert()
 	}
 }
 
