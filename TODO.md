@@ -1,4 +1,4 @@
-sound still kinda broken on linux side.
+small timer for the show map recv function
 
 GUI? possibilities. win32?
 
