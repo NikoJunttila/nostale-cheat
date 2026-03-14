@@ -4,7 +4,6 @@ package payload
 import "core:fmt"
 import os "core:os/old"
 import win "core:sys/windows"
-import "core:thread"
 
 foreign import kernel32 "system:Kernel32.lib"
 
@@ -41,11 +40,13 @@ alert :: proc() {
 play_alert_sound :: proc() {
 	// only .wav files
 	// this is loaded from inside the the program .dll gets injected to and using relative will fail unless its inside the folder actually running game?
-	ok := win.PlaySoundW(
-		`C:\Users\bill\Desktop\Shared\nostale-cheats/alert.wav`,
-		nil,
-		win.SND_FILENAME | win.SND_ASYNC,
-	)
+	// ok := win.PlaySoundW(
+	// 	`C:\Users\bill\Desktop\Shared\nostale-cheats/alert.wav`,
+	// 	nil,
+	// 	win.SND_FILENAME | win.SND_ASYNC,
+	// )
+	// relational and place the alert in nostale folder
+	ok := win.PlaySoundW(`alert.wav`, nil, win.SND_FILENAME | win.SND_ASYNC)
 	if !ok {
 		log_warn("failed to play alert sound")
 	} else {
