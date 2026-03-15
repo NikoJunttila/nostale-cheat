@@ -16,3 +16,13 @@ tasks:
     desc: clean up
     cmds:
       - rm *.obj
+
+  main:
+    desc: main account
+    cmds:
+      - protontricks -c 'wine injector.exe' 4240740151
+
+  steam:
+    desc: steam account
+    cmds:
+      - protontricks -c 'wine injector.exe' 550470

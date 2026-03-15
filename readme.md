@@ -4,7 +4,12 @@ new os package has some serious problems with the 32bit windows. quitly crashing
 
 ## linux injection inside proton
 
+my main account folder.
 protontricks -c 'wine injector.exe' 4240740151
+
+steam smurf: 550470
+when running the steam native version it goes to just steam.
+/home/derp/.steam/steam/steamapps/common/NosTale
 
 ## Payload logging
 
