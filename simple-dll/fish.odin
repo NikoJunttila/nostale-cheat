@@ -42,9 +42,8 @@ fish_handleGURI :: proc(line: []string) {
 	if len(line) < 6 {return}
 	if line[3] != bot.playerID {return}
 	fishing_state := &bot.state.(FishingState)
-	log_info(fmt.tprintf("guri line spotted %s", line[4]))
 	if len(bot.skill_que) > 0 {
-		log_info("early return in guri: queue not empty")
+		log_warn("early return in guri: queue not empty")
 		return
 	}
 	switch line[4] {
@@ -149,7 +148,7 @@ fish_handleSR :: proc(words: []string) {
 
 	switch skillID {
 	case "3":
-		log_info(fmt.tprintf("reset skill %s", skillID))
+		// log_info(fmt.tprintf("reset skill %s", skillID))
 		fishing_state.baitSkill = true
 		// Mirror reference: if we ran out of baits and bait skill is now ready, restart
 		if fishing_state.outOfBaits && len(bot.skill_que) == 0 {
@@ -159,10 +158,10 @@ fish_handleSR :: proc(words: []string) {
 	case "8":
 		fishing_state.expBuff = true
 	case "9":
-		log_info(fmt.tprintf("reset skill %s", skillID))
+		// log_info(fmt.tprintf("reset skill %s", skillID))
 		fishing_state.lineBuff = true
 	case "10":
-		log_info(fmt.tprintf("reset skill %s", skillID))
+		// log_info(fmt.tprintf("reset skill %s", skillID))
 		fishing_state.proCastLine = true
 	}
 }

@@ -10,6 +10,7 @@ global_addrs: packetlogger_addrs
 packet_queue: SafeQueue
 
 f5_was_down := false
+f6_was_down := false
 iteration := 0
 
 handle_hotkeys :: proc() {
@@ -24,6 +25,29 @@ handle_hotkeys :: proc() {
 		}
 	}
 	f5_was_down = is_down
+
+	is_down = (u16(win.GetAsyncKeyState(win.VK_F6)) & 0x8000) != 0
+	if is_down && !f6_was_down {
+		if bot.mode == .DPSCheck {
+			state := &bot.state.(DPSCheckState)
+			switch state.mode {
+			case .IC:
+				state.mode = .ASGOBAS
+				log_info("dps state: ASGOBAS")
+			case .ASGOBAS:
+				state.mode = .RAID
+				log_info("dps state: RAID")
+			case .RAID:
+				state.mode = .IC
+				log_info("dps state: IC")
+			}
+		} else {
+			bot.mode = .DPSCheck
+			update_state()
+			log_info("[F6] activated dps mode")
+		}
+	}
+	f6_was_down = is_down
 }
 
 actual_main :: proc() {
@@ -39,10 +63,9 @@ actual_main :: proc() {
 			if q_ok {
 				for p in important_packets {
 					if strings.contains(packet, p) {
-						log_info(packet)
 						words := strings.split(packet, " ")
 						handle_packet(words)
-						//delete(words) //might cause errors? will cause memory leak if not cleaned up?
+						delete(words) //might cause errors? will cause memory leak if not cleaned up?
 					}
 				}
 			}

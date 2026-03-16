@@ -20,6 +20,8 @@ SAYI :: "sayi"
 SU :: "su"
 SR :: "sr"
 C_MAP :: "c_map"
-IN :: "IN"
+IN :: "in"
+QNAMLI :: "qnamli"
+MSGI :: "msgi"
 
-important_packets := []string{GURI, SAYI, SU, SR, C_MAP, IN}
+important_packets := []string{GURI, SAYI, SU, SR, C_MAP, IN, QNAMLI, MSGI}

@@ -7,8 +7,9 @@ LOG_BUFFER_SIZE :: 512
 LOG_PREFIX_INFO :: "[PAYLOAD] INFO: "
 LOG_PREFIX_WARN :: "[PAYLOAD] WARN: "
 LOG_PREFIX_ERROR :: "[PAYLOAD] ERROR: "
+LOG_PREFIX_IMPORTANT :: "[PAYLOAD] IMPORTANT: "
 
-VERSION :: "1.0.99"
+VERSION :: "1.0.110"
 
 log_info :: proc(message: string) {
 	log_with_prefix(LOG_PREFIX_INFO, message)
@@ -20,6 +21,10 @@ log_warn :: proc(message: string) {
 
 log_error :: proc(message: string) {
 	log_with_prefix(LOG_PREFIX_ERROR, message)
+}
+
+log_important :: proc(message: string) {
+	log_with_prefix(LOG_PREFIX_IMPORTANT, message)
 }
 
 log_with_prefix :: proc(prefix, message: string) {

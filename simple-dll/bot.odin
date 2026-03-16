@@ -2,13 +2,14 @@
 package payload
 
 import "core:fmt"
+import "core:strings"
 import "core:time"
 
 BotState :: union {
 	FishingState,
+	DPSCheckState,
 	// MobGrindingState,
 	// IceFlowerState,
-	// DPSCheckState,
 }
 
 Mode :: enum {
@@ -19,20 +20,30 @@ Mode :: enum {
 	MOB_GRINDING,
 }
 
+que_type :: enum {
+	skill,
+	send_packet,
+	recv_packet,
+}
+
 Skill_que :: struct {
-	skill:    string,
-	castTime: time.Time,
-	delay:    time.Duration,
+	skill:       string,
+	castTime:    time.Time,
+	delay:       time.Duration,
+	full_packet: string,
+	type:        que_type,
 }
 
 Bot :: struct {
 	playerID:      string,
 	playerSP:      u8,
+	level:         int,
 	mode:          Mode,
 	state:         BotState,
 	last_activity: time.Time,
 	currentDelay:  time.Duration,
 	skill_que:     [dynamic]Skill_que,
+	player_list:   map[i32]string, //id -> name. no clue about this anymore
 }
 
 bot: Bot
@@ -60,10 +71,12 @@ init_bot :: proc() {
 		log_warn("failed to get packetlogger addresses")
 	}
 	bot = Bot {
-		playerID = fmt.aprintf("%d", id^),
-		playerSP = sp^,
-		mode     = .FISHING,
-		state    = FishingState{},
+		playerID    = fmt.aprintf("%d", id^),
+		playerSP    = sp^,
+		level       = 93, // hardcoded until I find offsets for this
+		mode        = .FISHING,
+		state       = FishingState{},
+		player_list = make(map[i32]string),
 	}
 	update_state()
 }
@@ -74,8 +87,15 @@ bot_tick :: proc() {
 	if len(bot.skill_que) != 0 {
 		next := bot.skill_que[0]
 		if time.since(next.castTime) > 0 {
-			log_info("casting a skill from que")
-			castSkill(next.skill)
+			// log_info("casting a skill from que")
+			switch next.type {
+			case .skill:
+				castSkill(next.skill)
+			case .send_packet:
+				send_packet(next.full_packet)
+			case .recv_packet:
+				recv_packet(next.full_packet)
+			}
 			bot.last_activity = time.now()
 			bot.currentDelay -= next.delay
 			ordered_remove(&bot.skill_que, 0)
@@ -112,6 +132,35 @@ add_bot_skill_que :: proc(waitMS: int, skill: string) {
 		castTime = skill_call_time,
 		skill    = skill,
 		delay    = delay,
+		type     = .skill,
+	}
+	append(&bot.skill_que, item)
+}
+
+add_packet_skill_que :: proc(waitMS: int, packet: string) {
+	delay := time.Duration(waitMS) * time.Millisecond + time.Duration(iteration)
+	bot.currentDelay += delay
+	// Schedule relative to now + total accumulated delay so skills fire sequentially
+	skill_call_time := time.time_add(time.now(), bot.currentDelay)
+	item := Skill_que {
+		castTime    = skill_call_time,
+		delay       = delay,
+		type        = .send_packet,
+		full_packet = packet,
+	}
+	append(&bot.skill_que, item)
+}
+
+recv_packet_skill_que :: proc(waitMS: int, packet: string) {
+	delay := time.Duration(waitMS) * time.Millisecond + time.Duration(iteration)
+	bot.currentDelay += delay
+	// Schedule relative to now + total accumulated delay so skills fire sequentially
+	skill_call_time := time.time_add(time.now(), bot.currentDelay)
+	item := Skill_que {
+		castTime    = skill_call_time,
+		delay       = delay,
+		type        = .recv_packet,
+		full_packet = packet,
 	}
 	append(&bot.skill_que, item)
 }
@@ -137,14 +186,14 @@ update_state :: proc() {
 	// 	}
 	// 	bot.state = mob_state
 	// 	fmt.println("mob grind state")
-	// case .DPSCheck:
-	// 	mapper := make(map[string]raid_player) //mem leaks xddd
-	// 	DPS_state := DPSCheckState {
-	// 		mode      = .IC,
-	// 		raid_list = mapper,
-	// 	}
-	// 	fmt.println("auto joining IC")
-	// 	bot.state = DPS_state
+	case .DPSCheck:
+		mapper := make(map[string]raid_player) //mem leaks xddd
+		DPS_state := DPSCheckState {
+			mode      = .IC,
+			raid_list = mapper,
+		}
+		fmt.println("auto joining IC")
+		bot.state = DPS_state
 	// case .ICE_FLOWER:
 	}
 }
@@ -162,7 +211,7 @@ handle_packet :: proc(words: []string) {
 	case .ICE_FLOWER:
 		handle_ice_flower_packet(words)
 	case .DPSCheck:
-	// handle_DPSCheck_packet(bot, words)
+		handle_DPSCheck_packet(words)
 	}
 }
 
@@ -179,12 +228,12 @@ handle_ice_flower_packet :: proc(words: []string) {
 }
 // map changed, if fishing is due to admin
 handleC_map :: proc(words: []string) {
+	recv_packet_skill_que(1000, "tcrank 1")
 	switch bot.mode {
 	case .PAUSED, .DPSCheck:
 		//to prevent double running this. 1 is new map, 0 is old map
 		if len(words) >= 4 && words[3] == "1" {
 			fmt.println("Map change!!!")
-			recv_packet("tcrank 1")
 		}
 	case .FISHING, .ICE_FLOWER, .MOB_GRINDING:
 		log_info("admin alert")
@@ -201,22 +250,26 @@ bot_pause :: proc() {
 	log_info("[F5] paused")
 }
 
+
 // should find admin entrance but not really. useless at the moment for this purpose.
 // TODO: log all in entries to a file so we can analyze them?
 handleIN :: proc(line: []string) {
 	if len(line) < 9 do return
-	if line[1] != "1" do return
-	if line[8] != "2" && bot.mode == .FISHING {
-		log_info("admin alert")
-		bot_pause()
-		alert()
-		return
-	}
-	// dps tracker stuff. save for later
-	// name, id := line[2], line[4]
-	// intID := parse_str_int(id)
-	// if intID == 0 do return
-	// heapName := strings.clone(name) //mem leak if not deleted
-	// // player_list:   map[i32]string, //id -> name
-	// bot.player_list[intID] = heapName //takes about 36kb when up to 500 entries so w/e
+	if line[1] != "1" do return // actual player in
+	// log_line := strings.join(line, " ")
+	// log_important(log_line)
+	// if line[8] != "2" { // most definitely not a admin alert
+	// 	log_important("admin one???")
+	// 	// bot_pause()
+	// 	// delete(log_line)
+	// 	// alert()
+	// 	// play_alert_sound()
+	// 	return
+	// }
+	name, id := line[1], line[3]
+	intID := parse_str_int(id)
+	if intID == 0 do return
+	heapName := strings.clone(name) //mem leak if not deleted
+	// player_list:   map[i32]string, //id -> name
+	bot.player_list[intID] = heapName //takes about 36kb when up to 500 entries so w/e
 }
