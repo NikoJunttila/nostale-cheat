@@ -32,6 +32,7 @@ Skill_que :: struct {
 	delay:       time.Duration,
 	full_packet: string,
 	type:        que_type,
+	important:   bool,
 }
 
 Bot :: struct {
@@ -84,7 +85,13 @@ init_bot :: proc() {
 
 
 bot_tick :: proc() {
-	if bot.mode == .PAUSED do return
+	if bot.mode == .PAUSED {
+		if len(bot.skill_que) != 0 {
+			//clean que. will this cause memory leaks?
+			clear(&bot.skill_que)
+		}
+		return
+	}
 	if len(bot.skill_que) != 0 {
 		next := bot.skill_que[0]
 		if time.since(next.castTime) > 0 {
@@ -99,6 +106,11 @@ bot_tick :: proc() {
 			}
 			bot.last_activity = time.now()
 			bot.currentDelay -= next.delay
+			if next.important {
+				log_this := fmt.aprintf("doing: %s type %s", next.full_packet, next.type)
+				log_important(log_this)
+				delete(log_this)
+			}
 			ordered_remove(&bot.skill_que, 0)
 		}
 	}
@@ -138,7 +150,7 @@ add_bot_skill_que :: proc(waitMS: int, skill: string) {
 	append(&bot.skill_que, item)
 }
 
-add_packet_skill_que :: proc(waitMS: int, packet: string) {
+add_packet_skill_que :: proc(waitMS: int, packet: string, important := false) {
 	delay := time.Duration(waitMS) * time.Millisecond + time.Duration(iteration)
 	bot.currentDelay += delay
 	// Schedule relative to now + total accumulated delay so skills fire sequentially

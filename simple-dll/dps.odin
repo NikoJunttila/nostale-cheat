@@ -80,7 +80,7 @@ DPS_handle_join :: proc(words: []string) {
 		if words[2] == "#guri^506" {
 			//join ic
 			join_packet := "#guri^506"
-			add_packet_skill_que(1000, join_packet)
+			add_packet_skill_que(1000, join_packet, true)
 			log_info("joining ic")
 			state.current_round = 0 //dmg
 			state.round_number = 0
@@ -90,7 +90,7 @@ DPS_handle_join :: proc(words: []string) {
 		if words[2] == "#guri^596" {
 			//join ic
 			join_packet := "#guri^596"
-			add_packet_skill_que(1000, join_packet)
+			add_packet_skill_que(1000, join_packet, true)
 			log_info("joining asgobas")
 			state.current_round = 0 //dmg
 			state.round_number = 0
@@ -104,7 +104,7 @@ moved_to_ic :: proc() {
 	mv_packet := "walk 40 68 0 15"
 	add_packet_skill_que(1000, mv_packet) //walk to safespot
 	// tp_packet := fmt.aprintf("0 tp 1 %s 40 68", bot.playerID) //recv tp to fake you at safespot?
-	// add_packet_skill_que(&bot.socket, mv_packet)
+	// add_packet_skill_que(mv_packet)
 	// delete(tp_packet)
 }
 

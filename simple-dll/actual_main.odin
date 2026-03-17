@@ -77,8 +77,15 @@ actual_main :: proc() {
 		for !empty(&send_queue) {
 			packet, q_ok := front(&send_queue)
 			if q_ok {
-				// Just log them for now
-				log_info(fmt.tprintf("[SENT] %s", packet))
+				// Filter spammy packets
+				is_spam := false
+				for p in spam_packets {
+					if strings.has_prefix(packet, p) {
+						is_spam = true
+						break
+					}
+				}
+				if !is_spam do log_sent_packet(packet)
 			}
 			pop(&send_queue)
 		}

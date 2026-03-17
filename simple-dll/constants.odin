@@ -25,3 +25,16 @@ QNAMLI :: "qnamli"
 MSGI :: "msgi"
 
 important_packets := []string{GURI, SAYI, SU, SR, C_MAP, IN, QNAMLI, MSGI}
+spam_packets := []string {
+	"ncif ",
+	"pulse ",
+	"u_s ",
+	"walk ",
+	"guri ",
+	"c_close ",
+	"mall ",
+	"rest ",
+	"f_stash_end",
+	"bp_close",
+}
+
