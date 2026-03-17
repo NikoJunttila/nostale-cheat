@@ -8,6 +8,7 @@ import "core:time"
 
 global_addrs: packetlogger_addrs
 packet_queue: SafeQueue
+send_queue: SafeQueue
 
 f5_was_down := false
 f6_was_down := false
@@ -72,17 +73,28 @@ actual_main :: proc() {
 			pop(&packet_queue)
 		}
 
+		// Fetch sent packets from queue
+		for !empty(&send_queue) {
+			packet, q_ok := front(&send_queue)
+			if q_ok {
+				// Just log them for now
+				log_info(fmt.tprintf("[SENT] %s", packet))
+			}
+			pop(&send_queue)
+		}
+
 		bot_tick()
 		handle_hotkeys()
 
-		time.sleep(50 * time.Millisecond)
+		time.sleep(25 * time.Millisecond)
 		iteration += 1
 		if iteration % 1000 == 0 {
 			check_afk()
 			log_message := fmt.aprintf(
-				"p que: %d, %d que",
+				"p que: %d, %d skill_que, %d s_que",
 				len(packet_queue.queue),
 				len(bot.skill_que),
+				len(send_queue.queue),
 			)
 			log_info(log_message)
 			delete(log_message)

@@ -1,5 +1,10 @@
 dps mode for ic/ac.
 log sent packets
+ignore:
+ncif
+pulse
+u_s // use a skill
+
 auto join ic and ac correct.
 ascobas point levels
 raid mode somehow working?

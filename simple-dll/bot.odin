@@ -64,8 +64,9 @@ init_bot :: proc() {
 	}
 	ok3 := get_packetlogger_addrs(cast(^u8)modinfo.lpBaseOfDll, u32(modinfo.SizeOfImage))
 	if ok3 {
-		init_packetlogger(&packet_queue)
+		init_packetlogger(&packet_queue, &send_queue)
 		hook_recv()
+		hook_send()
 		log_info("packetlogger hooked")
 	} else {
 		log_warn("failed to get packetlogger addresses")

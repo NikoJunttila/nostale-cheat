@@ -3,12 +3,15 @@ package payload
 
 import "base:runtime"
 import "core:mem"
+import "core:strings"
 import win "core:sys/windows"
 
 HOOK_SIZE :: 5
+HOOK_SIZE_SEND :: 6
 
 // Global state
 qRecv: ^SafeQueue
+qSend: ^SafeQueue
 SendAddy: uintptr
 RecvHookAddy: uintptr
 TNTClient: uintptr
@@ -16,8 +19,25 @@ originalCallAddy: uintptr
 jmpBackAddy: uintptr
 originalBytes: [10]byte
 
+sendTrampoline_addr: uintptr
+sendOriginalBytes: [10]byte
 trampoline_addr: uintptr
 send_packet_proc: proc "c" (tnt_client: uintptr, packet: cstring, send_addy: uintptr)
+
+// The Odin hook receiver that pushes to sent queue with filtering
+@(export)
+odin_custom_send :: proc "c" (packet_ptr: cstring) {
+	context = runtime.default_context()
+
+	if packet_ptr != nil && qSend != nil {
+		packet_str := string(packet_ptr)
+		// Filter out movement packets to avoid spam
+		if !strings.has_prefix(packet_str, "walk ") {
+			// SafeQueue's push handles taking a copy of the string data internally
+			push(qSend, packet_str)
+		}
+	}
+}
 
 // The Odin hook receiver that pushes to our queue
 @(export)
@@ -32,8 +52,9 @@ odin_custom_recv :: proc "c" (packet_ptr: cstring) {
 	}
 }
 
-init_packetlogger :: proc(queue: ^SafeQueue) {
-	qRecv = queue
+init_packetlogger :: proc(recv_queue, send_queue: ^SafeQueue) {
+	qRecv = recv_queue
+	qSend = send_queue
 	RecvHookAddy = global_addrs.RecvHookAddy
 	TNTClient = global_addrs.TNTClient
 	SendAddy = global_addrs.SendAddy
@@ -177,6 +198,55 @@ init_packetlogger :: proc(queue: ^SafeQueue) {
 	} else {
 		log_error("Failed to allocate recv_stub memory")
 	}
+
+	// ----------------------------------------------------
+	// 4. Generate trampoline for CustomSend
+	// ----------------------------------------------------
+	sendTrampoline_addr = cast(uintptr)win.VirtualAlloc(
+		nil,
+		128,
+		win.MEM_COMMIT | win.MEM_RESERVE,
+		win.PAGE_EXECUTE_READWRITE,
+	)
+
+	if sendTrampoline_addr != 0 {
+		t := cast([^]byte)sendTrampoline_addr
+		idx: uintptr = 0
+
+		t[idx] = 0x60; idx += 1 // pushad
+		t[idx] = 0x9C; idx += 1 // pushfd
+		t[idx] = 0x52; idx += 1 // push edx (where sent packet string pointer is stored)
+
+		// call odin_custom_send
+		t[idx] = 0xE8; idx += 1
+		offset1 := u32(cast(uintptr)rawptr(odin_custom_send) - (sendTrampoline_addr + idx + 4))
+		(cast(^u32)(&t[idx]))^ = offset1
+		idx += 4
+
+		// add esp, 4
+		t[idx] = 0x83; idx += 1
+		t[idx] = 0xC4; idx += 1
+		t[idx] = 0x04; idx += 1
+
+		t[idx] = 0x9D; idx += 1 // popfd
+		t[idx] = 0x61; idx += 1 // popad
+
+		// save original bytes for unhook
+		copy(sendOriginalBytes[:HOOK_SIZE_SEND], (cast([^]byte)SendAddy)[:HOOK_SIZE_SEND])
+
+		// execute original 5 bytes
+		copy((cast([^]byte)(&t[idx]))[:HOOK_SIZE_SEND], (cast([^]byte)SendAddy)[:HOOK_SIZE_SEND])
+		idx += HOOK_SIZE_SEND
+
+		// jmp back
+		t[idx] = 0xE9; idx += 1
+		jmpBackSend := SendAddy + HOOK_SIZE_SEND
+		offset2 := u32(jmpBackSend - (sendTrampoline_addr + idx + 4))
+		(cast(^u32)(&t[idx]))^ = offset2
+		idx += 4
+	} else {
+		log_error("Failed to allocate send trampoline memory")
+	}
 }
 
 hook_recv :: proc() {
@@ -212,6 +282,42 @@ unhook_recv :: proc() {
 	copy((cast([^]byte)RecvHookAddy)[:HOOK_SIZE], originalBytes[:HOOK_SIZE])
 
 	win.VirtualProtect(cast(win.LPVOID)RecvHookAddy, HOOK_SIZE, oldProtect, &oldProtect)
+}
+
+hook_send :: proc() {
+	if sendTrampoline_addr == 0 {return}
+
+	oldProtect: win.DWORD
+	win.VirtualProtect(
+		cast(win.LPVOID)SendAddy,
+		HOOK_SIZE_SEND,
+		win.PAGE_EXECUTE_READWRITE,
+		&oldProtect,
+	)
+
+	dst := cast([^]byte)SendAddy
+	dst[0] = 0xE9 // jmp
+	offset := u32(sendTrampoline_addr - (SendAddy + 5))
+	(cast(^u32)(&dst[1]))^ = offset
+	dst[5] = 0x90 // nop for the 6th byte
+
+	win.VirtualProtect(cast(win.LPVOID)SendAddy, HOOK_SIZE_SEND, oldProtect, &oldProtect)
+}
+
+unhook_send :: proc() {
+	if sendTrampoline_addr == 0 {return}
+
+	oldProtect: win.DWORD
+	win.VirtualProtect(
+		cast(win.LPVOID)SendAddy,
+		HOOK_SIZE_SEND,
+		win.PAGE_EXECUTE_READWRITE,
+		&oldProtect,
+	)
+
+	copy((cast([^]byte)SendAddy)[:HOOK_SIZE_SEND], sendOriginalBytes[:HOOK_SIZE_SEND])
+
+	win.VirtualProtect(cast(win.LPVOID)SendAddy, HOOK_SIZE_SEND, oldProtect, &oldProtect)
 }
 
 // Emulates NostaleStringA
