@@ -119,7 +119,7 @@ bot_tick :: proc() {
 castSkill :: proc(skillID: string) {
 	bot.last_activity = time.now()
 	skill_packet := fmt.aprintf("u_s %s 1 %s", skillID, bot.playerID)
-	log_info(fmt.tprintf("casting skill %s", skill_packet))
+	// log_info(fmt.tprintf("casting skill %s", skill_packet))
 	send_packet(skill_packet)
 	delete(skill_packet)
 }
