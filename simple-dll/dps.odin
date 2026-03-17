@@ -54,9 +54,9 @@ handle_DPSCheck_packet :: proc(words: []string) {
 	case "c_map":
 		handleC_map(words)
 		log_important(strings.join(words, " ", context.temp_allocator))
-		if words[1] == "xdd" { 	// TODO: figure this out
-			moved_to_ic()
-		}
+	// if words[1] == "xdd" { 	// TODO: figure this out. que join ic with this moved_to_ic?
+	// 	moved_to_ic()
+	// }
 	case "in":
 		handleIN(words)
 	}
@@ -87,6 +87,15 @@ DPS_handle_join :: proc(words: []string) {
 			state.activation_points = 0
 		}
 	case .ASGOBAS:
+		if words[2] == "#guri^596" {
+			//join ic
+			join_packet := "#guri^596"
+			add_packet_skill_que(1000, join_packet)
+			log_info("joining asgobas")
+			state.current_round = 0 //dmg
+			state.round_number = 0
+			state.activation_points = 0
+		}
 	// qnamli 51 #guri^596 2547 0 0 0 //asgobas join icon
 	}
 }
