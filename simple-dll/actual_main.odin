@@ -33,9 +33,6 @@ handle_hotkeys :: proc() {
 			state := &bot.state.(DPSCheckState)
 			switch state.mode {
 			case .IC:
-				state.mode = .ASGOBAS
-				log_info("dps state: ASGOBAS")
-			case .ASGOBAS:
 				state.mode = .RAID
 				log_info("dps state: RAID")
 			case .RAID:

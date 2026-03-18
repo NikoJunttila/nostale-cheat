@@ -16,8 +16,7 @@ IC 80-99: its 150, so 150, 450, 900, 1500 */
 IC_80_99 :: 150
 //combine ic and asgobas?
 DPSMode :: enum {
-	IC,
-	ASGOBAS,
+	IC, // + ascobas
 	RAID, //cound all damages and sort by most dmg done? List of all raid boss ids needed to count damage on boss
 }
 
@@ -86,7 +85,6 @@ DPS_handle_join :: proc(words: []string) {
 			state.round_number = 0
 			state.activation_points = 0
 		}
-	case .ASGOBAS:
 		if words[2] == "#guri^596" {
 			//join ic
 			join_packet := "#guri^596"
@@ -118,14 +116,15 @@ DPS_handleSU :: proc(line: []string) {
 	dmg := parse_str_int(dmg_str)
 	if state.mode != .RAID && id == bot.playerID {
 		state.total_dmg += dmg
-		#partial switch state.mode {
-		case .IC, .ASGOBAS:
+		switch state.mode {
+		case .IC:
 			state.current_round += dmg
 			state.activation_points += int(dmg) / (2 * bot.level)
 			needed_activation := IC_80_99 * (state.round_number * 3)
 			if state.activation_points >= needed_activation && needed_activation > 0 {
 				state.rewards_achieved = true
 			}
+		case .RAID:
 		}
 	} else {
 		player, ok := state.raid_list[id]

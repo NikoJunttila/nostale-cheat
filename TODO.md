@@ -37,8 +37,12 @@ void HandleSay(const std::vector<std::string>& packetSplitted)
     botManager->startFishing();
 }
 
+toggle between dps and fishing broken
+
 dps mode for ic/ac.
 auto join ic and ac correct.
+
+auto join does not work. maybe small timer and prevent duplicate send?
 
 ascobas point levels
 raid mode somehow working?
