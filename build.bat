@@ -11,6 +11,12 @@ if "%~1"=="" (
 @echo Bumping version...
 odin run bump_version.odin -file
 @echo Building simple.dll
+odin build ./simple-dll/ -target:windows_i386 -build-mode:dll -out:simple.dll --debug
+del /q *.obj *.exp *.lib
+exit /b %errorlevel%
+
+:build_prod
+@echo Building simple.dll in production mode
 odin build ./simple-dll/ -target:windows_i386 -build-mode:dll -out:simple.dll
 del /q *.obj *.exp *.lib
 exit /b %errorlevel%

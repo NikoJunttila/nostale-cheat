@@ -30,6 +30,7 @@ currently math/random crashesh the game??? so just call times without random
 
 logs
 tail -f /home/derp/.steam/steam/steamapps/compatdata/4240740151/pfx/drive_c/Nostale/payload_debug.log
+tail -f /home/derp/.steam/steam/steamapps/compatdata/4240740151/pfx/drive_c/Nostale/payload_payload_sent_packets.log
 
 sound is relational to the nostale folder where exe is injected so do this for alert sound.
 cp alert.wav /home/derp/.steam/steam/steamapps/compatdata/4240740151/pfx/drive_c/Nostale/
