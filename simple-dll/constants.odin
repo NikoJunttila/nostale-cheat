@@ -28,7 +28,7 @@ important_packets := []string{GURI, SAYI, SU, SR, C_MAP, IN, QNAMLI, MSGI}
 spam_packets := []string {
 	"ncif ",
 	"pulse ",
-	"u_s ",
+	"u_s ", // skill usage
 	"walk ",
 	"guri ",
 	"c_close ",
@@ -36,5 +36,5 @@ spam_packets := []string {
 	"rest ",
 	"f_stash_end",
 	"bp_close",
+	"ptctl", // pet movement
 }
-

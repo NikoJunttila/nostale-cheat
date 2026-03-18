@@ -97,14 +97,14 @@ actual_main :: proc() {
 		iteration += 1
 		if iteration % 1000 == 0 {
 			check_afk()
-			log_message := fmt.aprintf(
-				"p que: %d, %d skill_que, %d s_que",
-				len(packet_queue.queue),
-				len(bot.skill_que),
-				len(send_queue.queue),
-			)
-			log_info(log_message)
-			delete(log_message)
+			// log_message := fmt.aprintf(
+			// 	"p que: %d, %d skill_que, %d s_que",
+			// 	len(packet_queue.queue),
+			// 	len(bot.skill_que),
+			// 	len(send_queue.queue),
+			// )
+			// log_info(log_message)
+			// delete(log_message)
 			iteration = 1
 		}
 	}
