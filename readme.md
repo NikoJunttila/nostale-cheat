@@ -34,3 +34,8 @@ tail -f /home/derp/.steam/steam/steamapps/compatdata/4240740151/pfx/drive_c/Nost
 
 sound is relational to the nostale folder where exe is injected so do this for alert sound.
 cp alert.wav /home/derp/.steam/steam/steamapps/compatdata/4240740151/pfx/drive_c/Nostale/
+
+## ai info
+
+This is a project written with odin for injecting nostale video game that is 32bit with a .dll file.
+This targets windows environment only but usually is ran in linux through proton.
