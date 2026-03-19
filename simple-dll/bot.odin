@@ -258,9 +258,22 @@ handleC_map :: proc(words: []string) {
 bot_pause :: proc() {
 	bot.mode = .PAUSED
 	// flush any queued skills
-	clear(&bot.skill_que)
 	bot.currentDelay = 0
 	log_info("[F5] paused")
+	reset_skill_que()
+}
+
+reset_skill_que :: proc() {
+	bot.currentDelay = 0
+	log_info(
+		fmt.tprintf(
+			"reset que, sk len: %d, packet_queue %d",
+			len(bot.skill_que),
+			len(packet_queue.queue),
+		),
+	)
+	clear(&bot.skill_que)
+	clear(&packet_queue.queue)
 }
 
 

@@ -2,6 +2,7 @@
 package payload
 
 import "core:fmt"
+import "core:strings"
 import "core:time"
 
 
@@ -34,6 +35,8 @@ handle_fishing_packet :: proc(words: []string) {
 		handleIN(words)
 	case C_MAP:
 		handleC_map(words)
+	case SAY:
+		handle_say(words)
 	}
 }
 
@@ -123,6 +126,15 @@ fish_handleSU3 :: proc(line: []string) {
 	log_info("bot paused due to damage")
 	alert()
 }
+
+handle_say :: proc(lines: []string) {
+	if len(lines) < 6 do return
+	if lines[1] != "1" do return
+	if lines[2] != bot.playerID do return
+	if lines[3] != "10" do return
+	log_important(fmt.tprintf("say check: %s", strings.join(lines, " ", context.temp_allocator)))
+}
+
 
 // SAYI 1 <playerID> ... 2497 → out of baits
 fish_handleSayi :: proc(line: []string) {

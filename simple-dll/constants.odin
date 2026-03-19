@@ -23,8 +23,9 @@ C_MAP :: "c_map"
 IN :: "in"
 QNAMLI :: "qnamli"
 MSGI :: "msgi"
+SAY :: "SAY"
 
-important_packets := []string{GURI, SAYI, SU, SR, C_MAP, IN, QNAMLI, MSGI}
+important_packets := []string{GURI, SAYI, SAY, SU, SR, C_MAP, IN, QNAMLI, MSGI}
 spam_packets := []string {
 	"ncif ",
 	"pulse ",
@@ -37,4 +38,6 @@ spam_packets := []string {
 	"f_stash_end",
 	"bp_close",
 	"ptctl", // pet movement
+	"suctl ",
+	"u_i ",
 }

@@ -1,7 +1,6 @@
 #+build windows
 package payload
 
-import "core:fmt"
 import "core:strings"
 import win "core:sys/windows"
 import "core:time"
@@ -18,6 +17,7 @@ handle_hotkeys :: proc() {
 	is_down := (u16(win.GetAsyncKeyState(win.VK_F5)) & 0x8000) != 0
 	if is_down && !f5_was_down {
 		if bot.mode == .PAUSED {
+			reset_skill_que()
 			bot.mode = .FISHING
 			update_state()
 			log_info("[F5] resumed fishing")
@@ -29,6 +29,7 @@ handle_hotkeys :: proc() {
 
 	is_down = (u16(win.GetAsyncKeyState(win.VK_F6)) & 0x8000) != 0
 	if is_down && !f6_was_down {
+		reset_skill_que()
 		if bot.mode == .DPSCheck {
 			state := &bot.state.(DPSCheckState)
 			switch state.mode {
@@ -94,15 +95,8 @@ actual_main :: proc() {
 		iteration += 1
 		if iteration % 1000 == 0 {
 			check_afk()
-			// log_message := fmt.aprintf(
-			// 	"p que: %d, %d skill_que, %d s_que",
-			// 	len(packet_queue.queue),
-			// 	len(bot.skill_que),
-			// 	len(send_queue.queue),
-			// )
-			// log_info(log_message)
-			// delete(log_message)
 			iteration = 1
+			free_all(context.temp_allocator)
 		}
 	}
 }

@@ -86,7 +86,7 @@ DPS_handle_join :: proc(words: []string) {
 			state.activation_points = 0
 		}
 		if words[2] == "#guri^596" {
-			//join ic
+			//join ascobas
 			join_packet := "#guri^596"
 			add_packet_skill_que(1000, join_packet, true)
 			log_info("joining asgobas")

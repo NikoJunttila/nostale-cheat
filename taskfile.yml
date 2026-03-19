@@ -26,3 +26,12 @@ tasks:
     desc: steam account
     cmds:
       - protontricks -c 'wine injector.exe' 550470
+  logs:
+    desc: logs
+    cmds:
+      - tail -f /home/derp/.steam/steam/steamapps/compatdata/4240740151/pfx/drive_c/Nostale/payload_debug.log
+
+  sent:
+    desc: sent logs
+    cmds:
+      - tail -f /home/derp/.steam/steam/steamapps/compatdata/4240740151/pfx/drive_c/Nostale/payload_sent_packets.log
