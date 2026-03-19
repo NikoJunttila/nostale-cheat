@@ -45,8 +45,8 @@ fish_handleGURI :: proc(line: []string) {
 	if len(line) < 6 {return}
 	if line[3] != bot.playerID {return}
 	fishing_state := &bot.state.(FishingState)
-	if len(bot.skill_que) > 0 {
-		log_warn("early return in guri: queue not empty")
+	if len(bot.skill_que) > 0 { 	// good to have as we get this guri multiple times
+		// log_warn("early return in guri: queue not empty")
 		return
 	}
 	switch line[4] {

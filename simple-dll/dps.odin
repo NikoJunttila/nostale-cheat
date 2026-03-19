@@ -79,8 +79,8 @@ DPS_handle_join :: proc(words: []string) {
 		if words[2] == "#guri^506" {
 			//join ic
 			join_packet := "#guri^506"
-			add_packet_skill_que(1000, join_packet, true)
-			log_info("joining ic")
+			log_debug("should join ic here")
+			add_packet_skill_que(2000, join_packet, true)
 			state.current_round = 0 //dmg
 			state.round_number = 0
 			state.activation_points = 0
@@ -88,8 +88,7 @@ DPS_handle_join :: proc(words: []string) {
 		if words[2] == "#guri^596" {
 			//join ascobas
 			join_packet := "#guri^596"
-			add_packet_skill_que(1000, join_packet, true)
-			log_info("joining asgobas")
+			add_packet_skill_que(2000, join_packet, true)
 			state.current_round = 0 //dmg
 			state.round_number = 0
 			state.activation_points = 0
