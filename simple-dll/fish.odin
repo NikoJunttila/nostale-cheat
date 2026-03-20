@@ -52,7 +52,7 @@ fish_handleGURI :: proc(line: []string) {
 	switch line[4] {
 	case "30":
 		fishing_state.fish_caught += 1
-		log_info(fmt.tprintf("fish: %d", fishing_state.fish_caught))
+		// log_info(fmt.tprintf("fish: %d", fishing_state.fish_caught))
 		// Queue: pick up fish, then run the full buff+cast chain
 		add_bot_skill_que(200, "2")
 		fish_startFishing()

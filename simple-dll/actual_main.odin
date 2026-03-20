@@ -11,18 +11,19 @@ send_queue: SafeQueue
 
 f5_was_down := false
 f6_was_down := false
+f8_was_down := false
 iteration := 0
 
 handle_hotkeys :: proc() {
 	is_down := (u16(win.GetAsyncKeyState(win.VK_F5)) & 0x8000) != 0
 	if is_down && !f5_was_down {
-		if bot.mode == .PAUSED {
+		if bot.mode == .FISHING {
+			bot_pause()
+		} else {
 			reset_skill_que()
 			bot.mode = .FISHING
 			update_state()
 			log_info("[F5] resumed fishing")
-		} else {
-			bot_pause()
 		}
 	}
 	f5_was_down = is_down
@@ -47,6 +48,13 @@ handle_hotkeys :: proc() {
 		}
 	}
 	f6_was_down = is_down
+	is_down = (u16(win.GetAsyncKeyState(win.VK_F8)) & 0x8000) != 0
+	if is_down && !f8_was_down {
+		sp_transform := "sl 1"
+		send_packet(sp_transform)
+		log_info("should transform")
+	}
+	f8_was_down = is_down
 }
 
 actual_main :: proc() {

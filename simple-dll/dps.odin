@@ -42,9 +42,6 @@ DPSCheckState :: struct {
 handle_DPSCheck_packet :: proc(words: []string) {
 	switch words[0] {
 	case "qnamli":
-		log_line := strings.join(words, " ")
-		log_important(log_line)
-		delete(log_line)
 		DPS_handle_join(words)
 	case "msgi":
 		DPS_handle_msgi(words)
@@ -52,10 +49,6 @@ handle_DPSCheck_packet :: proc(words: []string) {
 		DPS_handleSU(words)
 	case "c_map":
 		handleC_map(words)
-		log_important(strings.join(words, " ", context.temp_allocator))
-	// if words[1] == "xdd" { 	// TODO: figure this out. que join ic with this moved_to_ic?
-	// 	moved_to_ic()
-	// }
 	case "in":
 		handleIN(words)
 	}
@@ -64,6 +57,7 @@ handle_DPSCheck_packet :: proc(words: []string) {
 DPS_handle_msgi :: proc(words: []string) {
 	if words[2] == "384" {
 		state := &bot.state.(DPSCheckState)
+		log_info(fmt.tprintf("new round dmg: %d", state.current_round))
 		state.current_round = 0 //reset round
 		state.round_number += 1
 		state.activation_points = 0
@@ -79,7 +73,7 @@ DPS_handle_join :: proc(words: []string) {
 		if words[2] == "#guri^506" {
 			//join ic
 			join_packet := "#guri^506"
-			log_debug("should join ic here")
+			log_info("should join ic here")
 			add_packet_skill_que(2000, join_packet, true)
 			state.current_round = 0 //dmg
 			state.round_number = 0
@@ -88,6 +82,7 @@ DPS_handle_join :: proc(words: []string) {
 		if words[2] == "#guri^596" {
 			//join ascobas
 			join_packet := "#guri^596"
+			log_info("should join ascobas here")
 			add_packet_skill_que(2000, join_packet, true)
 			state.current_round = 0 //dmg
 			state.round_number = 0
@@ -97,13 +92,13 @@ DPS_handle_join :: proc(words: []string) {
 	}
 }
 
-moved_to_ic :: proc() {
-	mv_packet := "walk 40 68 0 15"
-	add_packet_skill_que(1000, mv_packet) //walk to safespot
-	// tp_packet := fmt.aprintf("0 tp 1 %s 40 68", bot.playerID) //recv tp to fake you at safespot?
-	// add_packet_skill_que(mv_packet)
-	// delete(tp_packet)
-}
+// moved_to_ic :: proc() {
+// 	mv_packet := "walk 40 68 0 15"
+// 	add_packet_skill_que(1000, mv_packet) //walk to safespot
+// 	// tp_packet := fmt.aprintf("0 tp 1 %s 40 68", bot.playerID) //recv tp to fake you at safespot?
+// 	// add_packet_skill_que(mv_packet)
+// 	// delete(tp_packet)
+// }
 
 
 DPS_handleSU :: proc(line: []string) {
@@ -122,6 +117,8 @@ DPS_handleSU :: proc(line: []string) {
 			needed_activation := IC_80_99 * (state.round_number * 3)
 			if state.activation_points >= needed_activation && needed_activation > 0 {
 				state.rewards_achieved = true
+				log_important("achieved round points")
+				log_info(fmt.tprintf("dmg: %d", state.current_round))
 			}
 		case .RAID:
 		}
@@ -141,7 +138,6 @@ DPS_handleSU :: proc(line: []string) {
 				name = name,
 				dmg  = dmg,
 			}
-			fmt.println("new player")
 		}
 		DPS_rebuild_sorted_list(state)
 	}
