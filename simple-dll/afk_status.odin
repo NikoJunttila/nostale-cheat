@@ -7,17 +7,14 @@ import "core:time"
 check_afk :: proc() {
 	switch bot.mode {
 	case .FISHING:
-		fishing_state := &bot.state.(FishingState)
-		buff_cd := time.Minute * 2 + time.Second * 5
-		proline_buff_cd := time.Minute + time.Second * 5
-		if check_time(fishing_state.proCastLineCD, proline_buff_cd) {
-			fishing_state.proCastLine = true
+		if check_time(proCastLine.cdTimer, proCastLine.cd) {
+			proCastLine.ready = true
 		}
-		if check_time(fishing_state.lineCast, buff_cd) {
-			fishing_state.lineBuff = true
+		if check_time(maintainLineBuff.cdTimer, maintainLineBuff.cd) {
+			maintainLineBuff.ready = true
 		}
-		if check_time(fishing_state.baitCast, buff_cd) {
-			fishing_state.baitSkill = true
+		if check_time(baitSkill.cdTimer, baitSkill.cd) {
+			baitSkill.ready = true
 		}
 		small_check := time.Second * 20
 		if check_time(bot.last_activity, small_check) {

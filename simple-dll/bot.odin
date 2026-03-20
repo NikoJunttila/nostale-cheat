@@ -6,7 +6,6 @@ import "core:strings"
 import "core:time"
 
 BotState :: union {
-	FishingState,
 	DPSCheckState,
 	// MobGrindingState,
 	// IceFlowerState,
@@ -77,7 +76,7 @@ init_bot :: proc() {
 		playerSP    = sp^,
 		level       = 93, // hardcoded until I find offsets for this
 		mode        = .FISHING,
-		state       = FishingState{},
+		state       = DPSCheckState{},
 		player_list = make(map[i32]string),
 	}
 	update_state()
@@ -128,11 +127,10 @@ bot_afk_check :: proc() {
 	if bot.mode == .PAUSED do return
 	since_last_action := time.since(bot.last_activity)
 	if since_last_action < time.Minute * 5 do return
-	// reset skills and start again.
 	#partial switch bot.mode {
 	case .FISHING:
 		fish_reset_skills()
-		castSkill("2")
+		castSkill("1")
 	}
 }
 
@@ -182,13 +180,10 @@ update_state :: proc() {
 	bot.last_activity = time.now()
 	#partial switch bot.mode {
 	case .FISHING:
-		fishing_state := FishingState {
-			expBuff     = true,
-			lineBuff    = true,
-			baitSkill   = true,
-			proCastLine = true,
-		}
-		bot.state = fishing_state
+		expBuff.ready = true
+		maintainLineBuff.ready = true
+		baitSkill.ready = true
+		proCastLine.ready = true
 		fmt.println("fishing_state")
 	case .PAUSED:
 		fmt.println("bot is paused")

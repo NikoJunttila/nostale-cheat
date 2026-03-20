@@ -5,20 +5,45 @@ import "core:fmt"
 import "core:strings"
 import "core:time"
 
-
-// Mode-specific state
-FishingState :: struct {
-	fish_caught:   i32,
-	leg_fish:      i32,
-	expBuff:       bool,
-	lineBuff:      bool,
-	lineCast:      time.Time,
-	baitSkill:     bool,
-	baitCast:      time.Time,
-	outOfBaits:    bool,
-	proCastLine:   bool,
-	proCastLineCD: time.Time,
+Skill :: struct {
+	ready:     bool,
+	cd:        time.Duration,
+	cdTimer:   time.Time,
+	castLevel: u8,
+	key:       string,
 }
+
+expBuff := Skill {
+	ready     = true,
+	cd        = time.Second * 205,
+	castLevel = 25,
+	key       = "8",
+}
+
+maintainLineBuff := Skill {
+	ready     = true,
+	cd        = time.Second * 125,
+	castLevel = 25,
+	key       = "9",
+}
+
+baitSkill := Skill {
+	ready     = true,
+	cd        = time.Second * 125,
+	castLevel = 3,
+	key       = "3",
+}
+
+proCastLine := Skill {
+	ready     = true,
+	cd        = time.Second * 65,
+	castLevel = 45,
+	key       = "10",
+}
+
+outOfBaits := false
+fish_caught := 0
+
 
 // Fishing mode packet handler
 handle_fishing_packet :: proc(words: []string) {
@@ -44,26 +69,19 @@ handle_fishing_packet :: proc(words: []string) {
 fish_handleGURI :: proc(line: []string) {
 	if len(line) < 6 {return}
 	if line[3] != bot.playerID {return}
-	fishing_state := &bot.state.(FishingState)
 	if len(bot.skill_que) > 0 { 	// good to have as we get this guri multiple times
 		// log_warn("early return in guri: queue not empty")
 		return
 	}
 	switch line[4] {
 	case "30":
-		fishing_state.fish_caught += 1
-		// log_info(fmt.tprintf("fish: %d", fishing_state.fish_caught))
+		fish_caught += 1
 		// Queue: pick up fish, then run the full buff+cast chain
 		add_bot_skill_que(200, "2")
 		fish_startFishing()
 	case "31":
-		log_info("legendary fish!!")
-		fishing_state.fish_caught += 1
-		fishing_state.leg_fish += 1
-		log_info(
-			fmt.tprintf("fish: %d leg: %d", fishing_state.fish_caught, fishing_state.leg_fish),
-		)
-		// Queue: pick up fish, then run the full buff+cast chain
+		fish_caught += 1
+		log_info(fmt.tprintf("fish: %d legendary fish!!", fish_caught))
 		add_bot_skill_que(200, "2")
 		fish_startFishing()
 	}
@@ -72,44 +90,38 @@ fish_handleGURI :: proc(line: []string) {
 // Queue all ready buffs then cast the line — mirrors BotManager::startFishing
 fish_startFishing :: proc() {
 	if bot.mode != .FISHING {return}
-	fishing_state := &bot.state.(FishingState)
 
-	if fishing_state.outOfBaits {
+	if outOfBaits && bot.playerSP >= baitSkill.castLevel {
 		// No bait: only cast line if bait skill is ready (will re-bait)
-		if fishing_state.baitSkill {
-			add_bot_skill_que(5000, "3")
-			fishing_state.baitSkill = false
-			fishing_state.baitCast = time.now()
+		if baitSkill.ready {
+			add_bot_skill_que(5000, baitSkill.key)
+			baitSkill.ready = false
+			baitSkill.cdTimer = time.now()
 		}
-		// Don't cast the line; wait for SR on bait skill to restart
-		return
 	}
 
-	// expBuff — skip at max SP level 45
-	if fishing_state.expBuff && bot.playerSP < 45 {
-		add_bot_skill_que(5000, "8")
-		fishing_state.expBuff = false
+	if expBuff.ready && bot.playerSP < 45 && bot.playerSP >= expBuff.castLevel {
+		add_bot_skill_que(5000, expBuff.key)
+		expBuff.ready = false
+		expBuff.cdTimer = time.now()
 	}
 
-	// lineBuff
-	if fishing_state.lineBuff {
-		add_bot_skill_que(5000, "9")
-		fishing_state.lineBuff = false
-		fishing_state.lineCast = time.now()
+	if maintainLineBuff.ready && bot.playerSP >= maintainLineBuff.castLevel {
+		add_bot_skill_que(5000, maintainLineBuff.key)
+		maintainLineBuff.ready = false
+		maintainLineBuff.cdTimer = time.now()
 	}
 
-	// baitSkill
-	if fishing_state.baitSkill {
-		add_bot_skill_que(5000, "3")
-		fishing_state.baitSkill = false
-		fishing_state.baitCast = time.now()
+	if baitSkill.ready && bot.playerSP >= baitSkill.castLevel {
+		add_bot_skill_que(5000, baitSkill.key)
+		baitSkill.ready = false
+		baitSkill.cdTimer = time.now()
 	}
 
-	// proCastLine — if ready, cast it and return (it auto-casts the line)
-	if fishing_state.proCastLine {
-		add_bot_skill_que(5000, "10")
-		fishing_state.proCastLine = false
-		fishing_state.proCastLineCD = time.now()
+	if proCastLine.ready && bot.playerSP >= proCastLine.castLevel {
+		add_bot_skill_que(5000, proCastLine.key)
+		proCastLine.ready = false
+		proCastLine.cdTimer = time.now()
 		return
 	}
 
@@ -142,47 +154,36 @@ fish_handleSayi :: proc(line: []string) {
 	if line[1] != "1" {return}
 	if line[2] != bot.playerID {return}
 	if line[4] == "2497" {
-		fishing_state := &bot.state.(FishingState)
-		fishing_state.outOfBaits = true
+		outOfBaits = true
 		log_info("out of baits")
-		// If bait skill is already ready, restart right away
-		if fishing_state.baitSkill && len(bot.skill_que) == 0 {
-			fish_startFishing()
-		}
 	}
 }
 
 // SR <skillID> → skill cooldown expired, mark ready; bait SR restarts fishing if needed
 fish_handleSR :: proc(words: []string) {
 	if bot.mode != .FISHING || len(words) < 2 do return
-	fishing_state := &bot.state.(FishingState)
 	skillID := words[1]
 
 	switch skillID {
-	case "3":
-		// log_info(fmt.tprintf("reset skill %s", skillID))
-		fishing_state.baitSkill = true
+	case baitSkill.key:
+		baitSkill.ready = true
 		// Mirror reference: if we ran out of baits and bait skill is now ready, restart
-		if fishing_state.outOfBaits && len(bot.skill_que) == 0 {
-			fishing_state.outOfBaits = false
+		if outOfBaits {
 			fish_startFishing()
 		}
-	case "8":
-		fishing_state.expBuff = true
-	case "9":
-		// log_info(fmt.tprintf("reset skill %s", skillID))
-		fishing_state.lineBuff = true
-	case "10":
-		// log_info(fmt.tprintf("reset skill %s", skillID))
-		fishing_state.proCastLine = true
+	case expBuff.key:
+		expBuff.ready = true
+	case maintainLineBuff.key:
+		maintainLineBuff.ready = true
+	case proCastLine.key:
+		proCastLine.ready = true
 	}
 }
 
 fish_reset_skills :: proc() {
 	if bot.mode != .FISHING {return}
-	fishing_state := &bot.state.(FishingState)
-	fishing_state.lineBuff = true
-	fishing_state.baitSkill = true
-	fishing_state.proCastLine = true
+	maintainLineBuff.ready = true
+	baitSkill.ready = true
+	proCastLine.ready = true
 	log_info("bot skills are reset")
 }
