@@ -55,6 +55,7 @@ handle_DPSCheck_packet :: proc(words: []string) {
 }
 
 DPS_handle_msgi :: proc(words: []string) {
+	log_info("debug msgi hit")
 	if words[2] == "384" {
 		state := &bot.state.(DPSCheckState)
 		log_info(fmt.tprintf("new round dmg: %d", state.current_round))

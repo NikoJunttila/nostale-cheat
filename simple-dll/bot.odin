@@ -52,13 +52,13 @@ init_bot :: proc() {
 	modinfo := getModuleInfo()
 	id, ok := get_player_id_internal(cast(^u8)modinfo.lpBaseOfDll, u32(modinfo.SizeOfImage))
 	if ok {
-		log_info(fmt.aprintf("player id: %d", id^))
+		log_info(fmt.tprintf("player id: %d", id^))
 	} else {
 		log_info("failed to get id")
 	}
 	sp, ok2 := get_player_sp_internal(cast(^u8)modinfo.lpBaseOfDll, u32(modinfo.SizeOfImage))
 	if ok2 {
-		log_info(fmt.aprintf("player level: %d", sp^))
+		log_info(fmt.tprintf("player level: %d", sp^))
 	} else {
 		log_info("failed to get sp level")
 	}
@@ -93,7 +93,11 @@ bot_tick :: proc() {
 	}
 	if len(bot.skill_que) != 0 {
 		next := bot.skill_que[0]
+		if bot.mode == .DPSCheck {
+			log_info(fmt.tprintf("delay %v", bot.currentDelay))
+		}
 		if time.since(next.castTime) > 0 {
+
 			// log_info("casting a skill from que")
 			switch next.type {
 			case .skill:
@@ -106,6 +110,7 @@ bot_tick :: proc() {
 			bot.last_activity = time.now()
 			bot.currentDelay -= next.delay
 			if next.important {
+				//TODO figure out why this does not  get printed when joining ic / ascobas
 				log_this := fmt.aprintf("doing: %s type %s", next.full_packet, next.type)
 				log_important(log_this)
 				delete(log_this)
@@ -113,6 +118,20 @@ bot_tick :: proc() {
 			ordered_remove(&bot.skill_que, 0)
 		}
 	}
+}
+
+add_packet_skill_que :: proc(waitMS: int, packet: string, important := false) {
+	delay := time.Duration(waitMS) * time.Millisecond + time.Duration(iteration)
+	bot.currentDelay += delay
+	// Schedule relative to now + total accumulated delay so skills fire sequentially
+	skill_call_time := time.time_add(time.now(), bot.currentDelay)
+	item := Skill_que {
+		castTime    = skill_call_time,
+		delay       = delay,
+		type        = .send_packet,
+		full_packet = packet,
+	}
+	append(&bot.skill_que, item)
 }
 
 castSkill :: proc(skillID: string) {
@@ -148,19 +167,6 @@ add_bot_skill_que :: proc(waitMS: int, skill: string) {
 	append(&bot.skill_que, item)
 }
 
-add_packet_skill_que :: proc(waitMS: int, packet: string, important := false) {
-	delay := time.Duration(waitMS) * time.Millisecond + time.Duration(iteration)
-	bot.currentDelay += delay
-	// Schedule relative to now + total accumulated delay so skills fire sequentially
-	skill_call_time := time.time_add(time.now(), bot.currentDelay)
-	item := Skill_que {
-		castTime    = skill_call_time,
-		delay       = delay,
-		type        = .send_packet,
-		full_packet = packet,
-	}
-	append(&bot.skill_que, item)
-}
 
 recv_packet_skill_que :: proc(waitMS: int, packet: string) {
 	delay := time.Duration(waitMS) * time.Millisecond + time.Duration(iteration)

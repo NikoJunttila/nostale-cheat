@@ -39,7 +39,7 @@ handle_hotkeys :: proc() {
 				log_info("dps state: RAID")
 			case .RAID:
 				state.mode = .IC
-				log_info("dps state: IC")
+				log_info("dps state: IC/ASCOBAS")
 			}
 		} else {
 			bot.mode = .DPSCheck
@@ -64,38 +64,9 @@ actual_main :: proc() {
 	// thread.create_and_start(gui.start_gui)
 	recv_packet("tcrank 1")
 	for {
-		// Fetch packets from queue
-		for !empty(&packet_queue) {
-			packet, q_ok := front(&packet_queue)
-			if q_ok {
-				for p in important_packets {
-					if strings.contains(packet, p) {
-						words := strings.split(packet, " ")
-						handle_packet(words)
-						delete(words) //might cause errors? will cause memory leak if not cleaned up?
-					}
-				}
-			}
-			pop(&packet_queue)
-		}
 
-		// Fetch sent packets from queue
-		for !empty(&send_queue) {
-			packet, q_ok := front(&send_queue)
-			if q_ok {
-				// Filter spammy packets
-				is_spam := false
-				for p in spam_packets {
-					if strings.has_prefix(packet, p) {
-						is_spam = true
-						break
-					}
-				}
-				if !is_spam do log_sent_packet(packet)
-			}
-			pop(&send_queue)
-		}
-
+		packet_queue_tick()
+		sent_packet_que_tick()
 		bot_tick()
 		handle_hotkeys()
 
@@ -106,5 +77,41 @@ actual_main :: proc() {
 			iteration = 1
 			free_all(context.temp_allocator)
 		}
+	}
+}
+
+packet_queue_tick :: proc() {
+	// Fetch packets from queue
+	for !empty(&packet_queue) {
+		packet, q_ok := front(&packet_queue)
+		if q_ok {
+			for p in important_packets {
+				if strings.contains(packet, p) {
+					words := strings.split(packet, " ")
+					handle_packet(words)
+					delete(words) //might cause errors? will cause memory leak if not cleaned up?
+				}
+			}
+		}
+		pop(&packet_queue)
+	}
+}
+
+sent_packet_que_tick :: proc() {
+	// Fetch sent packets from queue
+	for !empty(&send_queue) {
+		packet, q_ok := front(&send_queue)
+		if q_ok {
+			// Filter spammy packets
+			is_spam := false
+			for p in spam_packets {
+				if strings.has_prefix(packet, p) {
+					is_spam = true
+					break
+				}
+			}
+			if !is_spam do log_sent_packet(packet)
+		}
+		pop(&send_queue)
 	}
 }
