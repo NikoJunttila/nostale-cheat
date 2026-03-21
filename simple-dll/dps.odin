@@ -14,7 +14,7 @@ IC 40-49 and 50-59: its 75, so 75, 225, 450, 750
 IC 60-69 and 70-79: its 112.5. so [...]
 IC 80-99: its 150, so 150, 450, 900, 1500 */
 IC_80_99 :: 150
-//combine ic and asgobas?
+
 DPSMode :: enum {
 	IC, // + ascobas
 	RAID, //cound all damages and sort by most dmg done? List of all raid boss ids needed to count damage on boss
@@ -55,7 +55,7 @@ handle_DPSCheck_packet :: proc(words: []string) {
 }
 
 DPS_handle_msgi :: proc(words: []string) {
-	log_info("debug msgi hit")
+	log_info(fmt.tprintf("%s", strings.join(words, " ", context.temp_allocator)))
 	if words[2] == "384" {
 		state := &bot.state.(DPSCheckState)
 		log_info(fmt.tprintf("new round dmg: %d", state.current_round))
@@ -77,7 +77,7 @@ DPS_handle_join :: proc(words: []string) {
 			log_info("should join ic here")
 			add_packet_skill_que(2000, join_packet, true)
 			state.current_round = 0 //dmg
-			state.round_number = 0
+			state.round_number = 1
 			state.activation_points = 0
 		}
 		if words[2] == "#guri^596" {
@@ -86,21 +86,12 @@ DPS_handle_join :: proc(words: []string) {
 			log_info("should join ascobas here")
 			add_packet_skill_que(2000, join_packet, true)
 			state.current_round = 0 //dmg
-			state.round_number = 0
+			state.round_number = 1
 			state.activation_points = 0
 		}
 	// qnamli 51 #guri^596 2547 0 0 0 //asgobas join icon
 	}
 }
-
-// moved_to_ic :: proc() {
-// 	mv_packet := "walk 40 68 0 15"
-// 	add_packet_skill_que(1000, mv_packet) //walk to safespot
-// 	// tp_packet := fmt.aprintf("0 tp 1 %s 40 68", bot.playerID) //recv tp to fake you at safespot?
-// 	// add_packet_skill_que(mv_packet)
-// 	// delete(tp_packet)
-// }
-
 
 DPS_handleSU :: proc(line: []string) {
 	state := &bot.state.(DPSCheckState)
@@ -109,19 +100,15 @@ DPS_handleSU :: proc(line: []string) {
 	id := line[2]
 	dmg_str := line[13]
 	dmg := parse_str_int(dmg_str)
-	if state.mode != .RAID && id == bot.playerID {
-		state.total_dmg += dmg
-		switch state.mode {
-		case .IC:
-			state.current_round += dmg
-			state.activation_points += int(dmg) / (2 * bot.level)
-			needed_activation := IC_80_99 * (state.round_number * 3)
-			if state.activation_points >= needed_activation && needed_activation > 0 {
-				state.rewards_achieved = true
-				log_important("achieved round points")
-				log_info(fmt.tprintf("dmg: %d", state.current_round))
-			}
-		case .RAID:
+	if state.mode == .IC && id == bot.playerID {
+		log_info(fmt.tprintf("%s", strings.join(line, " ", context.temp_allocator)))
+		state.current_round += dmg
+		state.activation_points += int(dmg) / (2 * bot.level)
+		needed_activation := IC_80_99 * (state.round_number * 3)
+		if state.activation_points > needed_activation {
+			state.rewards_achieved = true
+			log_important("achieved round points")
+			log_info(fmt.tprintf("dmg: %d", state.current_round))
 		}
 	} else {
 		player, ok := state.raid_list[id]

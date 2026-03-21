@@ -206,7 +206,6 @@ update_state :: proc() {
 			mode      = .IC,
 			raid_list = mapper,
 		}
-		fmt.println("auto joining IC")
 		bot.state = DPS_state
 	// case .ICE_FLOWER:
 	}

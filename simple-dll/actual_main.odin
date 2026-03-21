@@ -44,7 +44,7 @@ handle_hotkeys :: proc() {
 		} else {
 			bot.mode = .DPSCheck
 			update_state()
-			log_info("[F6] activated dps mode")
+			log_info("[F6] activated dps mode. ic/ascobas")
 		}
 	}
 	f6_was_down = is_down
@@ -90,6 +90,7 @@ packet_queue_tick :: proc() {
 					words := strings.split(packet, " ")
 					handle_packet(words)
 					delete(words) //might cause errors? will cause memory leak if not cleaned up?
+					break
 				}
 			}
 		}

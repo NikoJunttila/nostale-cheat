@@ -23,7 +23,7 @@ C_MAP :: "c_map"
 IN :: "in"
 QNAMLI :: "qnamli"
 MSGI :: "msgi"
-SAY :: "SAY"
+SAY :: "say"
 
 important_packets := []string{GURI, SAYI, SAY, SU, SR, C_MAP, IN, QNAMLI, MSGI}
 spam_packets := []string {
