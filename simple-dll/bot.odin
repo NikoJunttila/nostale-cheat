@@ -93,12 +93,8 @@ bot_tick :: proc() {
 	}
 	if len(bot.skill_que) != 0 {
 		next := bot.skill_que[0]
-		if bot.mode == .DPSCheck {
-			log_info(fmt.tprintf("delay %v", bot.currentDelay))
-		}
 		if time.since(next.castTime) > 0 {
 
-			// log_info("casting a skill from que")
 			switch next.type {
 			case .skill:
 				castSkill(next.skill)
@@ -110,7 +106,6 @@ bot_tick :: proc() {
 			bot.last_activity = time.now()
 			bot.currentDelay -= next.delay
 			if next.important {
-				//TODO figure out why this does not  get printed when joining ic / ascobas
 				log_this := fmt.aprintf("doing: %s type %s", next.full_packet, next.type)
 				log_important(log_this)
 				delete(log_this)
@@ -130,6 +125,7 @@ add_packet_skill_que :: proc(waitMS: int, packet: string, important := false) {
 		delay       = delay,
 		type        = .send_packet,
 		full_packet = packet,
+		important   = important,
 	}
 	append(&bot.skill_que, item)
 }
@@ -153,7 +149,7 @@ bot_afk_check :: proc() {
 	}
 }
 
-add_bot_skill_que :: proc(waitMS: int, skill: string) {
+add_bot_skill_que :: proc(waitMS: int, skill: string, important := false) {
 	delay := time.Duration(waitMS) * time.Millisecond + time.Duration(iteration)
 	bot.currentDelay += delay
 	// Schedule relative to now + total accumulated delay so skills fire sequentially
@@ -163,12 +159,13 @@ add_bot_skill_que :: proc(waitMS: int, skill: string) {
 		skill    = skill,
 		delay    = delay,
 		type     = .skill,
+		important = important,
 	}
 	append(&bot.skill_que, item)
 }
 
 
-recv_packet_skill_que :: proc(waitMS: int, packet: string) {
+recv_packet_skill_que :: proc(waitMS: int, packet: string, important := false) {
 	delay := time.Duration(waitMS) * time.Millisecond + time.Duration(iteration)
 	bot.currentDelay += delay
 	// Schedule relative to now + total accumulated delay so skills fire sequentially
@@ -178,6 +175,7 @@ recv_packet_skill_que :: proc(waitMS: int, packet: string) {
 		delay       = delay,
 		type        = .recv_packet,
 		full_packet = packet,
+		important   = important,
 	}
 	append(&bot.skill_que, item)
 }

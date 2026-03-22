@@ -35,7 +35,6 @@ DPSCheckState :: struct {
 	round_number:      int,
 	activation_points: int,
 	rewards_achieved:  bool,
-	afk_ic:            bool,
 	raid_list:         map[string]raid_player,
 	sorted_raid_list:  [dynamic]raid_player,
 }
@@ -58,8 +57,16 @@ DPS_handle_msgi :: proc(words: []string) {
 	log_info(fmt.tprintf("%s", strings.join(words, " ", context.temp_allocator)))
 	if words[2] == "384" {
 		state := &bot.state.(DPSCheckState)
-		log_info(fmt.tprintf("new round dmg: %d", state.current_round))
-		state.current_round = 0 //reset round
+		log_info(
+			fmt.tprintf(
+				"Round %d ended. DMG: %d, Points: %d, Achieved: %v",
+				state.round_number,
+				state.current_round,
+				state.activation_points,
+				state.rewards_achieved,
+			),
+		)
+		state.current_round = 0 //dmg reset round
 		state.round_number += 1
 		state.activation_points = 0
 		state.rewards_achieved = false
@@ -77,7 +84,7 @@ DPS_handle_join :: proc(words: []string) {
 			log_info("should join ic here")
 			add_packet_skill_que(2000, join_packet, true)
 			state.current_round = 0 //dmg
-			state.round_number = 1
+			state.round_number = 0
 			state.activation_points = 0
 		}
 		if words[2] == "#guri^596" {
@@ -86,7 +93,7 @@ DPS_handle_join :: proc(words: []string) {
 			log_info("should join ascobas here")
 			add_packet_skill_que(2000, join_packet, true)
 			state.current_round = 0 //dmg
-			state.round_number = 1
+			state.round_number = 0
 			state.activation_points = 0
 		}
 	// qnamli 51 #guri^596 2547 0 0 0 //asgobas join icon
@@ -101,14 +108,38 @@ DPS_handleSU :: proc(line: []string) {
 	dmg_str := line[13]
 	dmg := parse_str_int(dmg_str)
 	if state.mode == .IC && id == bot.playerID {
-		log_info(fmt.tprintf("%s", strings.join(line, " ", context.temp_allocator)))
 		state.current_round += dmg
 		state.activation_points += int(dmg) / (2 * bot.level)
 		needed_activation := IC_80_99 * (state.round_number * 3)
-		if state.activation_points > needed_activation {
+
+		percentage := 0.0
+		if needed_activation > 0 {
+			percentage = f64(state.activation_points) / f64(needed_activation) * 100.0
+		}
+
+		log_info(
+			fmt.tprintf(
+				"[R%d] DMG: %d (+%d) | Points: %d/%d (%.1f%%)",
+				state.round_number,
+				state.current_round,
+				dmg,
+				state.activation_points,
+				needed_activation,
+				percentage,
+			),
+		)
+
+		if !state.rewards_achieved && state.activation_points > needed_activation {
 			state.rewards_achieved = true
-			log_important("achieved round points")
-			log_info(fmt.tprintf("dmg: %d", state.current_round))
+			log_important(
+				fmt.tprintf(
+					"Achieved round %d points! Points: %d/%d, Total DMG: %d",
+					state.round_number,
+					state.activation_points,
+					needed_activation,
+					state.current_round,
+				),
+			)
 		}
 	} else {
 		player, ok := state.raid_list[id]
