@@ -13,6 +13,10 @@ Buffers :: enum {
 	WK,
 }
 
+cd :: proc "contextless" (seconds: int) -> time.Duration {
+	return time.Second * time.Duration(seconds)
+}
+
 // holy
 // u_s 1 2 4592787 // target spell
 // u_s 9 1 8141324
@@ -21,13 +25,18 @@ Buffers :: enum {
 // u_s 5 1 8141324
 // wk, 3,4,6,9
 holy_buffs := []Skill {
-	{key = "1", target = true},
-	{key = "5"},
-	{key = "7"},
-	{key = "8"},
-	{key = "9"},
+	{key = "1", target = true, cd = cd(3)},
+	{key = "5", cd = cd(35)},
+	{key = "7", cd = cd(20)},
+	{key = "8", cd = cd(120)},
+	{key = "9", cd = cd(120)},
 }
-wk_buffs := []Skill{{key = "3"}, {key = "4"}, {key = "6"}, {key = "9"}}
+wk_buffs := []Skill {
+	{key = "3", cd = cd(60)},
+	{key = "4", cd = cd(120)},
+	{key = "6", cd = cd(120)},
+	{key = "9", cd = cd(120)},
+}
 
 
 handle_buff_packet :: proc(words: []string) {
@@ -38,9 +47,7 @@ handle_buff_packet :: proc(words: []string) {
 }
 
 // eff 1 355473 5084
-// [09:46:20] [v1.0.134] [PAYLOAD] INFO: eff spotted eff 1 355473 5084
 handle_eff_buff :: proc(words: []string) {
-	log_info(fmt.tprintf("eff spotted %s len(%d)", strings.join(words, " "), len(words)))
 	if len(words) < 4 do return
 	if words[1] != "1" do return
 	if words[2] != TARGET_ID do return
@@ -52,15 +59,18 @@ handle_eff_buff :: proc(words: []string) {
 	log_info("casting buffs")
 	switch bot.buffing {
 	case .HOLY:
-		cast_buff_skills(holy_buffs)
+		cast_buff_skills(&holy_buffs)
 	case .WK:
-		cast_buff_skills(wk_buffs)
+		cast_buff_skills(&wk_buffs)
 	}
 }
 
-cast_buff_skills :: proc(skills: []Skill) {
-	for s in skills {
-		buf_skill_que(2500, s.key, s.target)
+cast_buff_skills :: proc(skills: ^[]Skill) {
+	for &s in skills {
+		if check_time(s.last_cast, s.cd) {
+			buf_skill_que(2200, s.key, s.target)
+			s.last_cast = time.now()
+		}
 	}
 }
 
@@ -92,4 +102,5 @@ choose_buffer :: proc() {
 	} else {
 		bot.buffing = .HOLY
 	}
+	log_info(fmt.tprintf("bot is buffing. buffs from %v", bot.buffing))
 }

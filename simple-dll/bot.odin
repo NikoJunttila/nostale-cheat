@@ -34,6 +34,7 @@ Skill :: struct {
 	castLevel: u8,
 	key:       string,
 	target:    bool,
+	last_cast: time.Time, // buff better use this to check cd
 }
 
 Skill_que :: struct {
@@ -88,7 +89,7 @@ init_bot :: proc() {
 		playerID    = fmt.aprintf("%d", id^),
 		playerSP    = sp^,
 		level       = 93, // hardcoded until I find offsets for this
-		mode        = .FISHING,
+		mode        = .BUFFING,
 		state       = DPSCheckState{},
 		player_list = make(map[i32]string),
 	}

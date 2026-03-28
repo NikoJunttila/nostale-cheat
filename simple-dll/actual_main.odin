@@ -56,7 +56,6 @@ handle_hotkeys :: proc() {
 		if bot.mode != .BUFFING {
 			bot.mode = .BUFFING
 			choose_buffer()
-			log_info(fmt.tprintf("bot is buffing. buffs from %v", bot.buffing))
 		} else {
 			switch bot.buffing {
 			case .WK:
