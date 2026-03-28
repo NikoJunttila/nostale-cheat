@@ -1,6 +1,14 @@
-buff. hardcode buffer bot ids to match skill set?
-
 cooking bot.
+
+start cooking "carp skever"
+u_s 2 1 355473 2492 1 0
+
+cooking is ready packet. recv
+eff_s 1 355473 7790 0
+
+finish cooking insta.
+u_s 3 1 355473
+
 
 dps mode for ic/ac.
 
