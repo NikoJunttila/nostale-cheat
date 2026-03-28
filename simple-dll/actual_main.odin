@@ -55,16 +55,6 @@ handle_hotkeys :: proc() {
 	if is_down && !f7_was_down {
 		if bot.mode != .BUFFING {
 			bot.mode = .BUFFING
-			choose_buffer()
-		} else {
-			switch bot.buffing {
-			case .WK:
-				bot.buffing = .HOLY
-				log_info("casting holy buffs")
-			case .HOLY:
-				bot.buffing = .WK
-				log_info("casting wk buffs")
-			}
 		}
 	}
 	f7_was_down = is_down

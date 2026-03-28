@@ -94,6 +94,7 @@ init_bot :: proc() {
 		player_list = make(map[i32]string),
 	}
 	update_state()
+	choose_buffer()
 }
 
 

@@ -8,6 +8,10 @@ import "core:time"
 TARGET_ID :: "355473"
 THUMPS_UP_ID :: "5084"
 
+
+WK_BUFFER_ID :: "8109126"
+HOLY_BUFFER_ID :: "8141324"
+
 Buffers :: enum {
 	HOLY,
 	WK,
@@ -94,10 +98,12 @@ castBuff :: proc(skillID: string, target: bool) {
 }
 
 choose_buffer :: proc() {
-	if bot.playerSP > 80 {
+	switch bot.playerID {
+	case WK_BUFFER_ID:
 		bot.buffing = .WK
-	} else {
+	case HOLY_BUFFER_ID:
 		bot.buffing = .HOLY
 	}
+
 	log_info(fmt.tprintf("bot is buffing. buffs from %v", bot.buffing))
 }
