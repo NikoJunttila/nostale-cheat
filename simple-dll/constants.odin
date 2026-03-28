@@ -25,8 +25,9 @@ QNAMLI :: "qnamli"
 MSGI :: "msgi"
 SAY :: "say"
 EFF :: "eff"
+EFF_S :: "eff_s"
 
-important_packets := []string{GURI, SAYI, SAY, SU, SR, C_MAP, IN, QNAMLI, MSGI, EFF}
+important_packets := []string{GURI, SAYI, SAY, SU, SR, C_MAP, IN, QNAMLI, MSGI, EFF, EFF_S}
 spam_packets := []string {
 	"ncif ",
 	"pulse ",

@@ -5,7 +5,7 @@ import "core:time"
 
 
 check_afk :: proc() {
-	switch bot.mode {
+	#partial switch bot.mode {
 	case .FISHING:
 		if check_time(proCastLine.cdTimer, proCastLine.cd) {
 			proCastLine.ready = true

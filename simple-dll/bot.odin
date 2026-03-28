@@ -14,6 +14,7 @@ BotState :: union {
 Mode :: enum {
 	PAUSED,
 	FISHING,
+	COOKING,
 	DPSCheck,
 	BUFFING,
 	ICE_FLOWER,
@@ -231,6 +232,9 @@ handle_packet :: proc(words: []string) {
 		handle_DPSCheck_packet(words)
 	case .BUFFING:
 		handle_buff_packet(words)
+	case .COOKING:
+	// broken. dont use
+	// handle_cooking_packet(words)
 	}
 }
 
@@ -247,11 +251,11 @@ handle_ice_flower_packet :: proc(words: []string) {
 }
 // map changed, if fishing is due to admin
 handleC_map :: proc(words: []string) {
-	recv_packet_skill_que(1000, "tcrank 1")
-	switch bot.mode {
+	#partial switch bot.mode {
 	case .PAUSED, .DPSCheck, .BUFFING:
 		//to prevent double running this. 1 is new map, 0 is old map
 		if len(words) >= 4 && words[3] == "1" {
+			recv_packet_skill_que(1000, "tcrank 1")
 			fmt.println("Map change!!!")
 		}
 	case .FISHING, .ICE_FLOWER, .MOB_GRINDING:

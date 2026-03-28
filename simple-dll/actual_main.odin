@@ -10,6 +10,7 @@ global_addrs: packetlogger_addrs
 packet_queue: SafeQueue
 send_queue: SafeQueue
 
+f1_was_down := false
 f5_was_down := false
 f6_was_down := false
 f7_was_down := false
@@ -29,6 +30,14 @@ handle_hotkeys :: proc() {
 		}
 	}
 	f5_was_down = is_down
+
+
+	is_down = (u16(win.GetAsyncKeyState(win.VK_F1)) & 0x8000) != 0
+	if is_down && !f1_was_down {
+		bot.mode = .COOKING
+		start_cooking()
+	}
+	f1_was_down = is_down
 
 	is_down = (u16(win.GetAsyncKeyState(win.VK_F6)) & 0x8000) != 0
 	if is_down && !f6_was_down {
