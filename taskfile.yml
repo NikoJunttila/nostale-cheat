@@ -2,21 +2,6 @@
 version: "3"
 
 tasks:
-  default:
-    desc: build dll
-    cmds:
-      - odin build ./simple-dll/ -target:windows_i386 -build-mode:dll -out:simple.dll
-
-  injector:
-    desc: build injector
-    cmds:
-      - odin build ./injector/ -target:windows_i386 -out:injector.exe
-
-  clean:
-    desc: clean up
-    cmds:
-      - rm *.obj
-
   main:
     desc: main account
     cmds:
@@ -35,3 +20,8 @@ tasks:
     desc: sent logs
     cmds:
       - tail -f /home/derp/.steam/steam/steamapps/compatdata/4240740151/pfx/drive_c/Nostale/payload_sent_packets.log
+
+  clean:
+    desc: clean up
+    cmds:
+      - rm *.obj

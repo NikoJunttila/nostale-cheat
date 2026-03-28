@@ -40,6 +40,7 @@ wk_buffs := []Skill {
 
 
 handle_buff_packet :: proc(words: []string) {
+	if TARGET_ID == bot.playerID do return // hotkeys effect all injected programs so we just return from main as that is not buffer alt
 	switch words[0] {
 	case EFF:
 		handle_eff_buff(words)
@@ -51,11 +52,7 @@ handle_eff_buff :: proc(words: []string) {
 	if len(words) < 4 do return
 	if words[1] != "1" do return
 	if words[2] != TARGET_ID do return
-	eff_id := words[3]
-	if eff_id != THUMPS_UP_ID {
-		log_info(fmt.tprintf("no match: eff id %q wanted id %q", eff_id, THUMPS_UP_ID))
-		return
-	}
+	if words[3] != THUMPS_UP_ID do return
 	log_info("casting buffs")
 	switch bot.buffing {
 	case .HOLY:

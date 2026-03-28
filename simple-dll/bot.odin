@@ -72,7 +72,7 @@ init_bot :: proc() {
 	}
 	sp, ok2 := get_player_sp_internal(cast(^u8)modinfo.lpBaseOfDll, u32(modinfo.SizeOfImage))
 	if ok2 {
-		log_info(fmt.tprintf("player level: %d", sp^))
+		log_info(fmt.tprintf("player sp level: %d", sp^))
 	} else {
 		log_info("failed to get sp level")
 	}

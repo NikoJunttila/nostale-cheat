@@ -28,7 +28,10 @@ setup_and_inject :: proc(proc_name, dll_path: string) -> bool {
 			main_game := is_main_game_process(pid)
 			if main_game {
 				ok := inject_dll(pid, dll_path)
-				break
+				if !ok {
+					fmt.println("failed to inject?")
+				}
+				// break // don't break and loop all main games to inject all running nostale processes
 			}
 		}
 	} else {
