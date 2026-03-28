@@ -15,14 +15,25 @@ Mode :: enum {
 	PAUSED,
 	FISHING,
 	DPSCheck,
+	BUFFING,
 	ICE_FLOWER,
 	MOB_GRINDING,
 }
 
 que_type :: enum {
 	skill,
+	buff,
 	send_packet,
 	recv_packet,
+}
+
+Skill :: struct {
+	ready:     bool,
+	cd:        time.Duration,
+	cdTimer:   time.Time,
+	castLevel: u8,
+	key:       string,
+	target:    bool,
 }
 
 Skill_que :: struct {
@@ -32,6 +43,7 @@ Skill_que :: struct {
 	full_packet: string,
 	type:        que_type,
 	important:   bool,
+	target:      bool,
 }
 
 Bot :: struct {
@@ -40,6 +52,7 @@ Bot :: struct {
 	level:         int,
 	mode:          Mode,
 	state:         BotState,
+	buffing:       Buffers,
 	last_activity: time.Time,
 	currentDelay:  time.Duration,
 	skill_que:     [dynamic]Skill_que,
@@ -94,7 +107,6 @@ bot_tick :: proc() {
 	if len(bot.skill_que) != 0 {
 		next := bot.skill_que[0]
 		if time.since(next.castTime) > 0 {
-
 			switch next.type {
 			case .skill:
 				castSkill(next.skill)
@@ -102,6 +114,8 @@ bot_tick :: proc() {
 				send_packet(next.full_packet)
 			case .recv_packet:
 				recv_packet(next.full_packet)
+			case .buff:
+				castBuff(next.skill, next.target)
 			}
 			bot.last_activity = time.now()
 			bot.currentDelay -= next.delay
@@ -155,10 +169,10 @@ add_bot_skill_que :: proc(waitMS: int, skill: string, important := false) {
 	// Schedule relative to now + total accumulated delay so skills fire sequentially
 	skill_call_time := time.time_add(time.now(), bot.currentDelay)
 	item := Skill_que {
-		castTime = skill_call_time,
-		skill    = skill,
-		delay    = delay,
-		type     = .skill,
+		castTime  = skill_call_time,
+		skill     = skill,
+		delay     = delay,
+		type      = .skill,
 		important = important,
 	}
 	append(&bot.skill_que, item)
@@ -188,16 +202,6 @@ update_state :: proc() {
 		maintainLineBuff.ready = true
 		baitSkill.ready = true
 		proCastLine.ready = true
-		fmt.println("fishing_state")
-	case .PAUSED:
-		fmt.println("bot is paused")
-	// case .MOB_GRINDING:
-	// 	mob_state := MobGrindingState {
-	// 		health_potion_cd = true,
-	// 		//rest
-	// 	}
-	// 	bot.state = mob_state
-	// 	fmt.println("mob grind state")
 	case .DPSCheck:
 		mapper := make(map[string]raid_player) //mem leaks xddd
 		DPS_state := DPSCheckState {
@@ -205,7 +209,7 @@ update_state :: proc() {
 			raid_list = mapper,
 		}
 		bot.state = DPS_state
-	// case .ICE_FLOWER:
+	case .PAUSED:
 	}
 }
 
@@ -223,6 +227,8 @@ handle_packet :: proc(words: []string) {
 		handle_ice_flower_packet(words)
 	case .DPSCheck:
 		handle_DPSCheck_packet(words)
+	case .BUFFING:
+		handle_buff_packet(words)
 	}
 }
 
@@ -241,7 +247,7 @@ handle_ice_flower_packet :: proc(words: []string) {
 handleC_map :: proc(words: []string) {
 	recv_packet_skill_que(1000, "tcrank 1")
 	switch bot.mode {
-	case .PAUSED, .DPSCheck:
+	case .PAUSED, .DPSCheck, .BUFFING:
 		//to prevent double running this. 1 is new map, 0 is old map
 		if len(words) >= 4 && words[3] == "1" {
 			fmt.println("Map change!!!")

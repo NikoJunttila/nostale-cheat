@@ -22,7 +22,7 @@ check_afk :: proc() {
 			fish_startFishing()
 		}
 	case .PAUSED, .DPSCheck:
-	case .ICE_FLOWER, .MOB_GRINDING:
+	case .ICE_FLOWER, .MOB_GRINDING, .BUFFING:
 	}
 }
 

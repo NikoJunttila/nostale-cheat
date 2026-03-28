@@ -5,14 +5,6 @@ import "core:fmt"
 import "core:strings"
 import "core:time"
 
-Skill :: struct {
-	ready:     bool,
-	cd:        time.Duration,
-	cdTimer:   time.Time,
-	castLevel: u8,
-	key:       string,
-}
-
 expBuff := Skill {
 	ready     = true,
 	cd        = time.Second * 205,

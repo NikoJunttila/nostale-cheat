@@ -1,6 +1,7 @@
 #+build windows
 package payload
 
+import "core:fmt"
 import "core:strings"
 import win "core:sys/windows"
 import "core:time"
@@ -11,6 +12,7 @@ send_queue: SafeQueue
 
 f5_was_down := false
 f6_was_down := false
+f7_was_down := false
 f8_was_down := false
 iteration := 0
 
@@ -48,6 +50,26 @@ handle_hotkeys :: proc() {
 		}
 	}
 	f6_was_down = is_down
+
+	is_down = (u16(win.GetAsyncKeyState(win.VK_F7)) & 0x8000) != 0
+	if is_down && !f7_was_down {
+		if bot.mode != .BUFFING {
+			bot.mode = .BUFFING
+			choose_buffer()
+			log_info(fmt.tprintf("bot is buffing. buffs from %v", bot.buffing))
+		} else {
+			switch bot.buffing {
+			case .WK:
+				bot.buffing = .HOLY
+				log_info("casting holy buffs")
+			case .HOLY:
+				bot.buffing = .WK
+				log_info("casting wk buffs")
+			}
+		}
+	}
+	f7_was_down = is_down
+
 	is_down = (u16(win.GetAsyncKeyState(win.VK_F8)) & 0x8000) != 0
 	if is_down && !f8_was_down {
 		sp_transform := "sl 1"
@@ -59,7 +81,6 @@ handle_hotkeys :: proc() {
 
 actual_main :: proc() {
 	log_info("payload main entered")
-
 	init_bot()
 	// thread.create_and_start(gui.start_gui)
 	recv_packet("tcrank 1")
@@ -87,7 +108,8 @@ packet_queue_tick :: proc() {
 		if q_ok {
 			for p in important_packets {
 				if strings.contains(packet, p) {
-					words := strings.split(packet, " ")
+					cleaned_p := strings.trim_right(packet, "\n")
+					words := strings.split(cleaned_p, " ")
 					handle_packet(words)
 					delete(words) //might cause errors? will cause memory leak if not cleaned up?
 					break
