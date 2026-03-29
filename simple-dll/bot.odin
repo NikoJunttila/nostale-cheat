@@ -221,7 +221,6 @@ handle_packet :: proc(words: []string) {
 	switch bot.mode {
 	case .PAUSED:
 		handleC_map(words)
-	//do nothing
 	case .FISHING:
 		handle_fishing_packet(words)
 	case .MOB_GRINDING:
@@ -233,8 +232,7 @@ handle_packet :: proc(words: []string) {
 	case .BUFFING:
 		handle_buff_packet(words)
 	case .COOKING:
-	// broken. dont use
-	// handle_cooking_packet(words)
+		handle_cooking_packet(words)
 	}
 }
 
