@@ -34,26 +34,22 @@ handle_hotkeys :: proc() {
 
 	is_down = (u16(win.GetAsyncKeyState(win.VK_F1)) & 0x8000) != 0
 	if is_down && !f1_was_down {
-    if bot.mode == .COOKING{
-      reset_skill_que()
-      switch bot.chef_mode {
-        case .ROAST:
-          bot.chef_mode = .SIMMER
-		      start_simmer()
-        case .SIMMER:
-          bot.chef_mode = .STIRFRY
-		      start_stirfry()
-        case .STIRFRY:
-          bot.chef_mode = .CHOPPING
-		      start_chopping()
-        case .CHOPPING:
-          bot.chef_mode = .ROAST
-		      start_roasting()
-      }
-      log_info(fmt.tprintf("bot chef mode is %v", bot.chef_mode))
-    } else {
-      bot.mode = .COOKING
-    }
+		if bot.mode == .COOKING {
+			reset_skill_que()
+			switch bot.chef_mode {
+			case .ROAST, .SIMMER, .STIRFRY:
+				bot.chef_mode = .CHOPPING
+				start_chopping()
+			case .CHOPPING:
+				bot.chef_mode = .ROAST
+				bot.mode = .PAUSED
+				log_info("paused bot")
+			}
+			log_info(fmt.tprintf("bot chef mode is %v", bot.chef_mode))
+		} else {
+			bot.mode = .COOKING
+			log_info("started cooking")
+		}
 	}
 	f1_was_down = is_down
 
@@ -141,6 +137,15 @@ sent_packet_que_tick :: proc() {
 	for !empty(&send_queue) {
 		packet, q_ok := front(&send_queue)
 		if q_ok {
+			if strings.contains("u_s", packet) {
+				log_info(packet)
+			}
+			if bot.mode == .COOKING {
+				cleaned_p := strings.trim_right(packet, "\n")
+				words := strings.split(cleaned_p, " ")
+				handle_sent_cooking_packet(words)
+				delete(words)
+			}
 			// Filter spammy packets
 			is_spam := false
 			for p in spam_packets {

@@ -55,7 +55,7 @@ Bot :: struct {
 	mode:          Mode,
 	state:         BotState,
 	buffing:       Buffers,
-  chef_mode: Chef_mode 
+	chef_mode:     Chef_mode,
 	last_activity: time.Time,
 	currentDelay:  time.Duration,
 	skill_que:     [dynamic]Skill_que,
