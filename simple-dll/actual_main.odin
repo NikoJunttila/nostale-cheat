@@ -34,8 +34,26 @@ handle_hotkeys :: proc() {
 
 	is_down = (u16(win.GetAsyncKeyState(win.VK_F1)) & 0x8000) != 0
 	if is_down && !f1_was_down {
-		bot.mode = .COOKING
-		start_cooking()
+    if bot.mode == .COOKING{
+      reset_skill_que()
+      switch bot.chef_mode {
+        case .ROAST:
+          bot.chef_mode = .SIMMER
+		      start_simmer()
+        case .SIMMER:
+          bot.chef_mode = .STIRFRY
+		      start_stirfry()
+        case .STIRFRY:
+          bot.chef_mode = .CHOPPING
+		      start_chopping()
+        case .CHOPPING:
+          bot.chef_mode = .ROAST
+		      start_roasting()
+      }
+      log_info(fmt.tprintf("bot chef mode is %v", bot.chef_mode))
+    } else {
+      bot.mode = .COOKING
+    }
 	}
 	f1_was_down = is_down
 
