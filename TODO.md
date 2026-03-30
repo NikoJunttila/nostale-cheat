@@ -1,7 +1,6 @@
-cooking bot. better
+cooking bot buffs casting.
 
-chop tomatoes 5x
-u_s 1 1 355473 2579 5 0
+asgobas timer. Someway to print when next asgobas is in
 
 dps mode for ic/ac.
 
@@ -10,4 +9,4 @@ raid mode somehow working?
 
 ts73 bot?
 
-GUI? possibilities. win32?
+GUI? possibilities. win32 and microUI

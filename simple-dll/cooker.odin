@@ -7,111 +7,79 @@ import "core:fmt"
 import "core:strings"
 import "core:time"
 
-CARP_SKEVER :: "2492"
-SIMMER_ITEM :: "2492"
-STIRFRY_ITEM :: "2"
-
-TOMATOES :: "2579"
-LETTUCE :: "2578"
-
-
-Chef_mode :: enum {
-	ROAST,
-	SIMMER,
-	STIRFRY,
-	CHOPPING,
-}
-
 handle_cooking_packet :: proc(words: []string) {
 	switch words[0] {
 	case EFF_S:
 		cook_handle_eff_s(words)
-	// case:
-	// find the sent cooking packet ID and repeat that ID
 	}
 }
-
 handle_sent_cooking_packet :: proc(words: []string) {
 	switch words[0] {
 	case U_S:
-		cook_handle_eff_s(words)
+		set_modes(words)
 	}
 }
 currently_cooking := ""
+bot_cooking_skill := ""
 // u_s 2 1 355473 2486 1 0
 // look for u_s x 1 botid ITEMID 1 0. then save to global variable and spam that one.
+
+// [4368] [12:08:05] [v1.0.172] [PAYLOAD] INFO: set modes called: u_s 2 1 355473
 set_modes :: proc(words: []string) {
-	log_info(fmt.tprintf("set_modes called with %s", words[0]))
-	if bot.chef_mode == .CHOPPING do return
-	if len(words) < 6 do return
+	log_info(fmt.tprintf("set modes called: %s", strings.join(words, " ", context.temp_allocator)))
+	if len(words) < 5 do return
 	if words[2] != "1" do return
 	if words[3] != bot.playerID do return
-	currently_cooking = words[4]
-	switch words[1] {
-	case "2":
-		bot.chef_mode = .ROAST
-	case "4":
-		bot.chef_mode = .SIMMER
-	case "7":
-		bot.chef_mode = .STIRFRY
-	}
+	if words[1] == "1" do chopping(words)
+	else do cooking(words)
+}
+
+cooking :: proc(words: []string) {
+	// Must clone — words[] points into queue memory that gets freed after this returns
+	if currently_cooking != "" do delete(currently_cooking)
+	currently_cooking = strings.clone(words[4])
+	if bot_cooking_skill != "" do delete(bot_cooking_skill)
+	bot_cooking_skill = strings.clone(words[1])
 	log_info(
 		fmt.aprintf(
-			"set cooking item to %s and chef mode is %v",
+			"set cooking item to %s and skill is %s",
 			currently_cooking,
-			bot.chef_mode,
+			bot_cooking_skill,
 		),
 	)
+}
+currently_chopping := ""
+chopping :: proc(words: []string) {
+	if currently_chopping != "" do delete(currently_cooking)
+	currently_chopping = words[4]
+	packet := chop_packet()
+	log_info(fmt.tprintf("sending: %s", packet))
+	add_packet_skill_que(6000, packet, true)
 }
 
 // eff_s 1 355473 7790 0
 cook_handle_eff_s :: proc(words: []string) {
-	if bot.chef_mode == .CHOPPING do return
 	if len(words) < 5 do return
 	if words[1] != "1" do return
 	if words[2] != bot.playerID do return
 	if words[3] != "7790" do return
 	if words[4] != "0" do return
-	packet := ""
-	switch bot.chef_mode {
-	case .ROAST:
-		packet = roasting_packet(currently_cooking)
-	case .SIMMER:
-		packet = simmer_packet(currently_cooking)
-	case .STIRFRY:
-		packet = stirfry_packet(currently_cooking)
-	case .CHOPPING:
-	}
-
+	log_info("finished cooking")
 	add_bot_skill_que(1000, "3")
-	add_packet_skill_que(5000, packet, true)
-	// delete(packet) //TODO where to delete this packet? or do I care about this leak?
+	packet := cooking_packet()
+	// this gets logged
+	// [4368] [12:09:01] [v1.0.172] [PAYLOAD] INFO: sending: u_s 2 1 355473 $]
+	log_info(fmt.tprintf("sending: %s", packet))
+	add_packet_skill_que(6000, packet, true)
+	// delete(packet) //I do not care about this leak
 }
 
 // u_s 2 1 355473 2486 1 0
-roasting_packet :: proc(food: string) -> string {
-	return fmt.aprintf("u_s 2 1 %s %s 1 0", bot.playerID, food)
+cooking_packet :: proc() -> string {
+	return fmt.aprintf("u_s %s 1 %s %s 1 0", bot_cooking_skill, bot.playerID, currently_cooking)
 }
 
-simmer_packet :: proc(food: string) -> string {
-	return fmt.aprintf("u_s 4 1 %s %s 1 0", bot.playerID, food)
-}
-
-stirfry_packet :: proc(food: string) -> string {
-	return fmt.aprintf("u_s 6 1 %s %s 1 0", bot.playerID, food)
-}
-
-start_chopping :: proc() {
-	log_info("chopping started. qued 100x tomato chopping")
-	packet := chop_packet(TOMATOES)
-	// just spam the skill que full of chop packets and then reset at some point
-	for i in 0 ..< 100 {
-		add_packet_skill_que(5000, packet, true)
-	}
-	// delete(packet) //TODO where to delete this packet? or do I care about this leak?
-}
-
-chop_packet :: proc(item: string) -> string {
+chop_packet :: proc() -> string {
 	//u_s 1 1 355473 2579 5 0
-	return fmt.aprintf("u_s 1 1 %s %s 5 0", bot.playerID, item)
+	return fmt.aprintf("u_s 1 1 %s %s 5 0", bot.playerID, currently_chopping)
 }

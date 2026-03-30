@@ -31,11 +31,7 @@ odin_custom_send :: proc "c" (packet_ptr: cstring) {
 
 	if packet_ptr != nil && qSend != nil {
 		packet_str := string(packet_ptr)
-		// Filter out movement packets to avoid spam
-		if !strings.has_prefix(packet_str, "walk ") {
-			// SafeQueue's push handles taking a copy of the string data internally
-			push(qSend, packet_str)
-		}
+		push(qSend, packet_str)
 	}
 }
 
