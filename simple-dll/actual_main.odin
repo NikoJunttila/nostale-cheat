@@ -20,6 +20,7 @@ iteration := 0
 handle_hotkeys :: proc() {
 	is_down := (u16(win.GetAsyncKeyState(win.VK_F5)) & 0x8000) != 0
 	if is_down && !f5_was_down {
+    update_bot_sp_level()
 		if bot.mode == .FISHING {
 			bot_pause()
 		} else {
@@ -31,10 +32,10 @@ handle_hotkeys :: proc() {
 	}
 	f5_was_down = is_down
 
-
 	is_down = (u16(win.GetAsyncKeyState(win.VK_F1)) & 0x8000) != 0
 	if is_down && !f1_was_down {
 		reset_skill_que()
+    update_bot_sp_level()
 		if bot.mode == .COOKING {
 			bot.mode = .PAUSED
 			log_info("paused bot")
@@ -76,9 +77,10 @@ handle_hotkeys :: proc() {
 
 	is_down = (u16(win.GetAsyncKeyState(win.VK_F8)) & 0x8000) != 0
 	if is_down && !f8_was_down {
-		sp_transform := "sl 1"
-		send_packet(sp_transform)
-		log_info("should transform")
+    asgobas_timer()
+		// sp_transform := "sl 1"
+		// send_packet(sp_transform)
+		// log_info("should transform")
 	}
 	f8_was_down = is_down
 }
@@ -87,6 +89,7 @@ actual_main :: proc() {
 	log_info("payload main entered")
 	init_bot()
 	// thread.create_and_start(gui.start_gui)
+  asgobas_timer()
 	recv_packet("tcrank 1")
 	for {
 

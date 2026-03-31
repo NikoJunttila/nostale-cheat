@@ -63,8 +63,10 @@ Bot :: struct {
 
 bot: Bot
 
+modinfo : MODULEINFO
+
 init_bot :: proc() {
-	modinfo := getModuleInfo()
+	modinfo = getModuleInfo()
 	id, ok := get_player_id_internal(cast(^u8)modinfo.lpBaseOfDll, u32(modinfo.SizeOfImage))
 	if ok {
 		log_info(fmt.tprintf("player id: %d", id^))
@@ -88,16 +90,26 @@ init_bot :: proc() {
 	}
 	bot = Bot {
 		playerID    = fmt.aprintf("%d", id^),
-		playerSP    = sp^,
 		level       = 93, // hardcoded until I find offsets for this
 		mode        = .BUFFING,
 		state       = DPSCheckState{},
 		player_list = make(map[i32]string),
 	}
+  update_bot_sp_level()
 	update_state()
 	choose_buffer()
 }
 
+update_bot_sp_level :: proc(){
+	sp, ok := get_player_sp_internal(cast(^u8)modinfo.lpBaseOfDll, u32(modinfo.SizeOfImage))
+	if ok {
+		log_info(fmt.tprintf("player sp level: %d", sp^))
+	} else {
+		log_error("failed to get sp level")
+	}
+  bot.playerSP = sp^
+
+}
 
 bot_tick :: proc() {
 	if bot.mode == .PAUSED {

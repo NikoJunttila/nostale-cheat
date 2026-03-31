@@ -1,9 +1,6 @@
-cooking bot buffs casting.
-
-asgobas timer. Someway to print when next asgobas is in
+cooking bot. stop activity when no incredients left
 
 dps mode for ic/ac.
-
 ascobas point levels
 raid mode somehow working?
 

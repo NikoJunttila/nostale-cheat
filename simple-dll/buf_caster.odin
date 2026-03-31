@@ -21,13 +21,7 @@ cd :: proc "contextless" (seconds: int) -> time.Duration {
 	return time.Second * time.Duration(seconds)
 }
 
-// holy
 // u_s 1 2 4592787 // target spell
-// u_s 9 1 8141324
-// u_s 8 1 8141324
-// u_s 7 1 8141324
-// u_s 5 1 8141324
-// wk, 3,4,6,9
 holy_buffs := []Skill {
 	{key = "1", target = true, cd = cd(3)},
 	{key = "5", cd = cd(35)},

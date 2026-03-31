@@ -7,6 +7,13 @@ import "core:fmt"
 import "core:strings"
 import "core:time"
 
+cooker_buffs := []Skill {
+	{key = "6", cd = cd(185), castLevel = 15}, // cooking prep
+	{key = "8", cd = cd(195), castLevel = 25}, // secret spice
+	{key = "9", cd = cd(205), castLevel = 30}, // healthy eating
+	{key = "10", cd = cd(205), castLevel = 40}, // sharpen knife
+}
+
 handle_cooking_packet :: proc(words: []string) {
 	switch words[0] {
 	case EFF_S:
@@ -19,12 +26,10 @@ handle_sent_cooking_packet :: proc(words: []string) {
 		set_modes(words)
 	}
 }
+
 currently_cooking := ""
 bot_cooking_skill := ""
-// u_s 2 1 355473 2486 1 0
-// look for u_s x 1 botid ITEMID 1 0. then save to global variable and spam that one.
 
-// [4368] [12:08:05] [v1.0.172] [PAYLOAD] INFO: set modes called: u_s 2 1 355473
 set_modes :: proc(words: []string) {
 	log_info(fmt.tprintf("set modes called: %s", strings.join(words, " ", context.temp_allocator)))
 	if len(words) < 5 do return
@@ -48,6 +53,7 @@ cooking :: proc(words: []string) {
 		),
 	)
 }
+
 currently_chopping := ""
 chopping :: proc(words: []string) {
 	if currently_chopping != "" do delete(currently_cooking)
@@ -66,12 +72,21 @@ cook_handle_eff_s :: proc(words: []string) {
 	if words[4] != "0" do return
 	log_info("finished cooking")
 	add_bot_skill_que(1000, "3")
+  cast_cooking_buffs()
 	packet := cooking_packet()
-	// this gets logged
-	// [4368] [12:09:01] [v1.0.172] [PAYLOAD] INFO: sending: u_s 2 1 355473 $]
 	log_info(fmt.tprintf("sending: %s", packet))
 	add_packet_skill_que(6000, packet, true)
 	// delete(packet) //I do not care about this leak
+}
+
+cast_cooking_buffs :: proc() {
+	for &s in cooker_buffs {
+		if check_time(s.last_cast, s.cd) {
+      if bot.playerSP < s.castLevel do continue
+			buf_skill_que(3200, s.key, s.target)
+			s.last_cast = time.now()
+		}
+	}
 }
 
 // u_s 2 1 355473 2486 1 0
