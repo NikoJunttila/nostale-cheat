@@ -27,7 +27,7 @@ tasks:
       - rm *.obj
 
   steam-logs:
-    desc: logs from steam account.
+    desc: logs from steam account
     cmds:
-      tail -f /home/derp/.local/share/Steam/steamapps/common/NosTale/payload_debug.log
+    - tail -f /home/derp/.local/share/Steam/steamapps/common/NosTale/payload_debug.log
 

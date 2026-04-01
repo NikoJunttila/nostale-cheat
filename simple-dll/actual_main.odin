@@ -5,6 +5,7 @@ import "core:fmt"
 import "core:strings"
 import win "core:sys/windows"
 import "core:time"
+import "core:thread"
 
 global_addrs: packetlogger_addrs
 packet_queue: SafeQueue
@@ -88,7 +89,7 @@ handle_hotkeys :: proc() {
 actual_main :: proc() {
 	log_info("payload main entered")
 	init_bot()
-	// thread.create_and_start(gui.start_gui)
+	thread.create_and_start(start_gui)
   asgobas_timer()
 	recv_packet("tcrank 1")
 	for {
