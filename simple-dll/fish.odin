@@ -128,7 +128,7 @@ fish_handleSU3 :: proc(line: []string) {
 	if line[4] != bot.playerID {return}
 	bot.mode = .PAUSED
 	log_info("bot paused due to damage")
-	alert()
+	alert("damage to bot")
 }
 
 handle_say :: proc(lines: []string) {

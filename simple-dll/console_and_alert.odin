@@ -23,13 +23,13 @@ setup_console :: proc() {
 		fmt.println("made new console")
 	}
 }
-
-alert :: proc() {
+// add a passable variable here.
+alert :: proc(message: string) {
 	log_warn("alert!!!")
 	play_alert_sound()
 	// Create a new thread so the MessageBox doesn't block the main generic payload execution.
-	winstring := win.utf8_to_wstring("admin alert")
-	winTitle := win.utf8_to_wstring("admin alert")
+	winstring := win.utf8_to_wstring(message)
+	winTitle := win.utf8_to_wstring(message)
 	win.MessageBoxW(nil, winstring, winTitle, win.MB_OK | win.MB_TOPMOST | win.MB_ICONWARNING)
 }
 

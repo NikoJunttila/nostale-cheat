@@ -14,10 +14,13 @@ cooker_buffs := []Skill {
 	{key = "10", cd = cd(205), castLevel = 40}, // sharpen knife
 }
 
+
 handle_cooking_packet :: proc(words: []string) {
 	switch words[0] {
 	case EFF_S:
 		cook_handle_eff_s(words)
+	case SAYI:
+		cooking_sayi(words)
 	}
 }
 handle_sent_cooking_packet :: proc(words: []string) {
@@ -27,11 +30,21 @@ handle_sent_cooking_packet :: proc(words: []string) {
 	}
 }
 
+cooking_sayi :: proc(words: []string) {
+	if len(words) < 6 do return
+	if words[1] != "1" do return
+	if words[2] != bot.playerID do return
+	if words[3] != "10" do return
+	if words[4] != "158" do return
+	log_info(fmt.tprintf("alert: %s", strings.join(words, " ", context.temp_allocator)))
+	bot_pause()
+	alert("out of incredients")
+}
+
 currently_cooking := ""
 bot_cooking_skill := ""
 
 set_modes :: proc(words: []string) {
-	log_info(fmt.tprintf("set modes called: %s", strings.join(words, " ", context.temp_allocator)))
 	if len(words) < 5 do return
 	if words[2] != "1" do return
 	if words[3] != bot.playerID do return
@@ -59,7 +72,6 @@ chopping :: proc(words: []string) {
 	if currently_chopping != "" do delete(currently_cooking)
 	currently_chopping = words[4]
 	packet := chop_packet()
-	log_info(fmt.tprintf("sending: %s", packet))
 	add_packet_skill_que(6000, packet, true)
 }
 
@@ -72,9 +84,8 @@ cook_handle_eff_s :: proc(words: []string) {
 	if words[4] != "0" do return
 	log_info("finished cooking")
 	add_bot_skill_que(1000, "3")
-  cast_cooking_buffs()
+	cast_cooking_buffs()
 	packet := cooking_packet()
-	log_info(fmt.tprintf("sending: %s", packet))
 	add_packet_skill_que(6000, packet, true)
 	// delete(packet) //I do not care about this leak
 }
@@ -82,7 +93,7 @@ cook_handle_eff_s :: proc(words: []string) {
 cast_cooking_buffs :: proc() {
 	for &s in cooker_buffs {
 		if check_time(s.last_cast, s.cd) {
-      if bot.playerSP < s.castLevel do continue
+			if bot.playerSP < s.castLevel do continue
 			buf_skill_que(3200, s.key, s.target)
 			s.last_cast = time.now()
 		}
@@ -91,10 +102,13 @@ cast_cooking_buffs :: proc() {
 
 // u_s 2 1 355473 2486 1 0
 cooking_packet :: proc() -> string {
+	if bot_cooking_skill == "" || currently_cooking == "" {
+		bot_pause()
+		alert("failed to get items")
+	}
 	return fmt.aprintf("u_s %s 1 %s %s 1 0", bot_cooking_skill, bot.playerID, currently_cooking)
 }
 
 chop_packet :: proc() -> string {
-	//u_s 1 1 355473 2579 5 0
 	return fmt.aprintf("u_s 1 1 %s %s 5 0", bot.playerID, currently_chopping)
 }

@@ -63,7 +63,7 @@ Bot :: struct {
 
 bot: Bot
 
-modinfo : MODULEINFO
+modinfo: MODULEINFO
 
 init_bot :: proc() {
 	modinfo = getModuleInfo()
@@ -95,19 +95,19 @@ init_bot :: proc() {
 		state       = DPSCheckState{},
 		player_list = make(map[i32]string),
 	}
-  update_bot_sp_level()
+	update_bot_sp_level()
 	update_state()
 	choose_buffer()
 }
 
-update_bot_sp_level :: proc(){
+update_bot_sp_level :: proc() {
 	sp, ok := get_player_sp_internal(cast(^u8)modinfo.lpBaseOfDll, u32(modinfo.SizeOfImage))
 	if ok {
 		log_info(fmt.tprintf("player sp level: %d", sp^))
 	} else {
 		log_error("failed to get sp level")
 	}
-  bot.playerSP = sp^
+	bot.playerSP = sp^
 
 }
 
@@ -271,7 +271,7 @@ handleC_map :: proc(words: []string) {
 	case .FISHING, .ICE_FLOWER, .MOB_GRINDING:
 		log_info("admin alert")
 		bot_pause()
-		alert()
+		alert("admin alert")
 	}
 }
 
