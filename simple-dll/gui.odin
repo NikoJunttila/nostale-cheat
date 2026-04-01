@@ -49,7 +49,7 @@ start_gui :: proc() {
 		cast(win.LPCWSTR)className,
 		cast(win.LPCWSTR)win.L("Bot Control"),
 		win.WS_OVERLAPPEDWINDOW,
-		100, 100, 320, 400,
+		100, 100, 320, 500,
 		nil, nil, hInstance, nil,
 	)
 
@@ -69,13 +69,14 @@ start_gui :: proc() {
 
 		update_gui()
 		win.InvalidateRect(gui_hwnd, nil, win.FALSE)
+		free_all(context.temp_allocator)
 	}
 }
 
 update_gui :: proc() {
 	mu.begin(&gui_ctx)
 
-	if mu.begin_window(&gui_ctx, "Bot Control", {10, 10, 280, 350}) {
+	if mu.begin_window(&gui_ctx, "Bot Control", {10, 10, 280, 440}) {
 		// Current mode display
 		mu.layout_row(&gui_ctx, {-1}, 0)
 		current_mode_str := fmt.tprintf("Current Mode: %s", mode_names[bot.mode])
@@ -103,6 +104,45 @@ update_gui :: proc() {
 			} else {
 				if .SUBMIT in mu.button(&gui_ctx, label) {
 					set_bot_mode(m)
+				}
+			}
+		}
+
+		mu.layout_row(&gui_ctx, {-1}, 8)
+		mu.label(&gui_ctx, "─────────────────────────")
+		mu.layout_row(&gui_ctx, {-1}, 0)
+		mu.label(&gui_ctx, "Mode Data:")
+
+		#partial switch bot.mode {
+		case .FISHING:
+			info := fmt.tprintf("Fish Caught: %d", fish_caught)
+			mu.label(&gui_ctx, info)
+			if outOfBaits {
+				mu.label(&gui_ctx, "STATUS: OUT OF BAITS")
+			} else {
+				mu.label(&gui_ctx, "STATUS: Active")
+			}
+		case .COOKING:
+			if currently_cooking != "" {
+				mu.label(&gui_ctx, fmt.tprintf("Item: %s", currently_cooking))
+				mu.label(&gui_ctx, fmt.tprintf("Skill: %s", bot_cooking_skill))
+			} else {
+				mu.label(&gui_ctx, "STATUS: Waiting to cook...")
+			}
+		case .DPSCheck:
+			if state, ok := bot.state.(DPSCheckState); ok {
+				mu.label(&gui_ctx, fmt.tprintf("Type: %v", state.mode))
+				if state.mode == .IC {
+					mu.label(&gui_ctx, fmt.tprintf("Round: %d", state.round_number))
+					mu.label(&gui_ctx, fmt.tprintf("DMG: %d", state.current_round))
+					mu.label(&gui_ctx, fmt.tprintf("Points: %d", state.activation_points))
+					if state.rewards_achieved {
+						mu.label(&gui_ctx, "REWARDS: ACHIEVED!")
+					} else {
+						mu.label(&gui_ctx, "REWARDS: PENDING")
+					}
+				} else if state.mode == .RAID {
+					mu.label(&gui_ctx, "RAID data active")
 				}
 			}
 		}
