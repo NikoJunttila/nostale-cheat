@@ -1,10 +1,10 @@
 #+build windows
 package payload
 
-import win "core:sys/windows"
 import "base:runtime"
-import mu "vendor:microui"
 import "core:fmt"
+import win "core:sys/windows"
+import mu "vendor:microui"
 
 // Global MicroUI Context for the GUI
 gui_ctx: mu.Context
@@ -66,8 +66,14 @@ start_gui :: proc() {
 		cast(win.LPCWSTR)className,
 		cast(win.LPCWSTR)win.L("Bot Control"),
 		win.WS_OVERLAPPEDWINDOW,
-		100, 100, 320, 500,
-		nil, nil, hInstance, nil,
+		100,
+		100,
+		320,
+		500,
+		nil,
+		nil,
+		hInstance,
+		nil,
 	)
 
 	mu.init(&gui_ctx)
@@ -110,14 +116,25 @@ update_gui :: proc() {
 
 		// Separator
 		mu.layout_row(&gui_ctx, {-1}, 8)
-		mu.label(&gui_ctx, "─────────────────────────")
+		mu.label(
+			&gui_ctx,
+			"─────────────────────────",
+		)
 
 		// Mode selection header
 		mu.layout_row(&gui_ctx, {-1}, 0)
 		mu.label(&gui_ctx, "Select Mode:")
 
 		// Mode buttons — two per row
-		modes := [?]Mode{.PAUSED, .FISHING, .COOKING, .DPSCheck, .BUFFING, .ICE_FLOWER, .MOB_GRINDING}
+		modes := [?]Mode {
+			.PAUSED,
+			.FISHING,
+			.COOKING,
+			.DPSCheck,
+			.BUFFING,
+			.ICE_FLOWER,
+			.MOB_GRINDING,
+		}
 
 		for m in modes {
 			mu.layout_row(&gui_ctx, {-1}, 0)
@@ -135,7 +152,10 @@ update_gui :: proc() {
 		}
 
 		mu.layout_row(&gui_ctx, {-1}, 8)
-		mu.label(&gui_ctx, "─────────────────────────")
+		mu.label(
+			&gui_ctx,
+			"─────────────────────────",
+		)
 		mu.layout_row(&gui_ctx, {-1}, 0)
 		mu.label(&gui_ctx, "Mode Data:")
 
@@ -173,6 +193,18 @@ update_gui :: proc() {
 			}
 		}
 
+		// Actions
+		mu.layout_row(&gui_ctx, {-1}, 8)
+		mu.label(
+			&gui_ctx,
+			"─────────────────────────",
+		)
+		mu.layout_row(&gui_ctx, {-1}, 0)
+		mu.label(&gui_ctx, "Actions:")
+		if .SUBMIT in mu.button(&gui_ctx, "Asgobas Timer") {
+			asgobas_timer()
+		}
+
 		mu.end_window(&gui_ctx)
 	}
 
@@ -188,24 +220,6 @@ update_gui :: proc() {
 			gui_log_buf_updated = false
 		}
 		mu.end_panel(&gui_ctx)
-
-		@(static) buf: [128]byte
-		@(static) buf_len: int
-		submitted := false
-		mu.layout_row(&gui_ctx, {-70, -1}, 0)
-		if .SUBMIT in mu.textbox(&gui_ctx, buf[:], &buf_len) {
-			mu.set_focus(&gui_ctx, gui_ctx.last_id)
-			submitted = true
-		}
-		if .SUBMIT in mu.button(&gui_ctx, "Submit") {
-			submitted = true
-		}
-		if submitted {
-			if buf_len > 0 {
-				write_gui_log(string(buf[:buf_len]))
-				buf_len = 0
-			}
-		}
 	}
 
 	mu.end(&gui_ctx)
@@ -257,7 +271,13 @@ gui_render :: proc(hdc: win.HDC, width, height: i32) {
 			)
 			win.SetBkMode(mem_dc, .TRANSPARENT)
 			str := win.utf8_to_utf16(variant.str)
-			win.TextOutW(mem_dc, variant.pos.x, variant.pos.y, cast(win.LPCWSTR)raw_data(str), i32(len(str)))
+			win.TextOutW(
+				mem_dc,
+				variant.pos.x,
+				variant.pos.y,
+				cast(win.LPCWSTR)raw_data(str),
+				i32(len(str)),
+			)
 
 		case ^mu.Command_Icon:
 			rect := win.RECT {
@@ -273,10 +293,10 @@ gui_render :: proc(hdc: win.HDC, width, height: i32) {
 			win.DeleteObject(win.HGDIOBJ(brush))
 
 		case ^mu.Command_Clip:
-			// Skip clipping for now
+		// Skip clipping for now
 
 		case ^mu.Command_Jump:
-			// Skip
+		// Skip
 		}
 	}
 
