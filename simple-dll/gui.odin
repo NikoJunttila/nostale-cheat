@@ -10,6 +10,23 @@ import "core:fmt"
 gui_ctx: mu.Context
 gui_hwnd: win.HWND
 
+gui_log_buf: [1 << 16]byte
+gui_log_buf_len: int
+gui_log_buf_updated: bool
+
+write_gui_log :: proc(str: string) {
+	if gui_log_buf_len + len(str) + 1 > len(gui_log_buf) {
+		gui_log_buf_len = 0
+	}
+	gui_log_buf_len += copy(gui_log_buf[gui_log_buf_len:], str)
+	gui_log_buf_len += copy(gui_log_buf[gui_log_buf_len:], "\n")
+	gui_log_buf_updated = true
+}
+
+read_gui_log :: proc() -> string {
+	return string(gui_log_buf[:gui_log_buf_len])
+}
+
 // Mode names for display
 mode_names := [Mode]string {
 	.PAUSED       = "PAUSED",
@@ -77,6 +94,15 @@ update_gui :: proc() {
 	mu.begin(&gui_ctx)
 
 	if mu.begin_window(&gui_ctx, "Bot Control", {10, 10, 280, 440}) {
+		// Player info display
+		mu.layout_row(&gui_ctx, {-1}, 0)
+		name_to_show := bot.username
+		if name_to_show == "" {
+			name_to_show = bot.playerID
+		}
+		player_info_str := fmt.tprintf("Player: %s (SP: %d)", name_to_show, bot.playerSP)
+		mu.label(&gui_ctx, player_info_str)
+
 		// Current mode display
 		mu.layout_row(&gui_ctx, {-1}, 0)
 		current_mode_str := fmt.tprintf("Current Mode: %s", mode_names[bot.mode])
@@ -148,6 +174,38 @@ update_gui :: proc() {
 		}
 
 		mu.end_window(&gui_ctx)
+	}
+
+	opts := mu.Options{.NO_CLOSE}
+	if mu.window(&gui_ctx, "Log Window", {300, 10, 350, 440}, opts) {
+		mu.layout_row(&gui_ctx, {-1}, -28)
+		mu.begin_panel(&gui_ctx, "Log")
+		mu.layout_row(&gui_ctx, {-1}, -1)
+		mu.text(&gui_ctx, read_gui_log())
+		if gui_log_buf_updated {
+			panel := mu.get_current_container(&gui_ctx)
+			panel.scroll.y = panel.content_size.y
+			gui_log_buf_updated = false
+		}
+		mu.end_panel(&gui_ctx)
+
+		@(static) buf: [128]byte
+		@(static) buf_len: int
+		submitted := false
+		mu.layout_row(&gui_ctx, {-70, -1}, 0)
+		if .SUBMIT in mu.textbox(&gui_ctx, buf[:], &buf_len) {
+			mu.set_focus(&gui_ctx, gui_ctx.last_id)
+			submitted = true
+		}
+		if .SUBMIT in mu.button(&gui_ctx, "Submit") {
+			submitted = true
+		}
+		if submitted {
+			if buf_len > 0 {
+				write_gui_log(string(buf[:buf_len]))
+				buf_len = 0
+			}
+		}
 	}
 
 	mu.end(&gui_ctx)

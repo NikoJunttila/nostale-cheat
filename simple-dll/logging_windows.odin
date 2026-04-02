@@ -9,7 +9,7 @@ LOG_PREFIX_WARN :: "[PAYLOAD] WARN: "
 LOG_PREFIX_ERROR :: "[PAYLOAD] ERROR: "
 LOG_PREFIX_IMPORTANT :: "[PAYLOAD] IMPORTANT: "
 
-VERSION :: "1.0.187"
+VERSION :: "1.0.189"
 
 log_info :: proc(message: string) {
 	log_with_prefix(LOG_PREFIX_INFO, message)
@@ -56,6 +56,7 @@ log_with_prefix :: proc(prefix, message: string) {
 	if written > LOG_BUFFER_SIZE - 2 {
 		written = LOG_BUFFER_SIZE - 2
 	}
+	write_gui_log(string(buffer[:written]))
 	buffer[written] = '\n'
 	buffer[written + 1] = 0
 	win.OutputDebugStringA(cast(win.LPCSTR)&buffer[0])

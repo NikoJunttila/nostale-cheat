@@ -1,96 +1,32 @@
 #+build windows
 package payload
 
-import "core:fmt"
 import "core:strings"
 import win "core:sys/windows"
-import "core:time"
 import "core:thread"
+import "core:time"
 
 global_addrs: packetlogger_addrs
 packet_queue: SafeQueue
 send_queue: SafeQueue
 
-f1_was_down := false
-f5_was_down := false
-f6_was_down := false
-f7_was_down := false
 f8_was_down := false
 iteration := 0
 
 handle_hotkeys :: proc() {
-	is_down := (u16(win.GetAsyncKeyState(win.VK_F5)) & 0x8000) != 0
-	if is_down && !f5_was_down {
-    update_bot_sp_level()
-		if bot.mode == .FISHING {
-			bot_pause()
-		} else {
-			reset_skill_que()
-			bot.mode = .FISHING
-			update_state()
-			log_info("[F5] resumed fishing")
-		}
-	}
-	f5_was_down = is_down
-
-	is_down = (u16(win.GetAsyncKeyState(win.VK_F1)) & 0x8000) != 0
-	if is_down && !f1_was_down {
-		reset_skill_que()
-    update_bot_sp_level()
-		if bot.mode == .COOKING {
-			bot.mode = .PAUSED
-			log_info("paused bot")
-		} else {
-			bot.mode = .COOKING
-			log_info("started cooking")
-		}
-	}
-	f1_was_down = is_down
-
-	is_down = (u16(win.GetAsyncKeyState(win.VK_F6)) & 0x8000) != 0
-	if is_down && !f6_was_down {
-		reset_skill_que()
-		if bot.mode == .DPSCheck {
-			state := &bot.state.(DPSCheckState)
-			switch state.mode {
-			case .IC:
-				state.mode = .RAID
-				log_info("dps state: RAID")
-			case .RAID:
-				state.mode = .IC
-				log_info("dps state: IC/ASCOBAS")
-			}
-		} else {
-			bot.mode = .DPSCheck
-			update_state()
-			log_info("[F6] activated dps mode. ic/ascobas")
-		}
-	}
-	f6_was_down = is_down
-
-	is_down = (u16(win.GetAsyncKeyState(win.VK_F7)) & 0x8000) != 0
-	if is_down && !f7_was_down {
-		if bot.mode != .BUFFING {
-			bot.mode = .BUFFING
-		}
-	}
-	f7_was_down = is_down
-
-	is_down = (u16(win.GetAsyncKeyState(win.VK_F8)) & 0x8000) != 0
+	is_down := (u16(win.GetAsyncKeyState(win.VK_F8)) & 0x8000) != 0
 	if is_down && !f8_was_down {
-    asgobas_timer()
+		asgobas_timer()
 		// sp_transform := "sl 1"
 		// send_packet(sp_transform)
-		// log_info("should transform")
 	}
 	f8_was_down = is_down
 }
 
 actual_main :: proc() {
-	log_info("payload main entered")
 	init_bot()
 	thread.create_and_start(start_gui)
-  asgobas_timer()
+	asgobas_timer()
 	recv_packet("tcrank 1")
 	for {
 

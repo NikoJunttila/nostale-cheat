@@ -12,17 +12,6 @@ foreign kernel32 {
 	SetConsoleTitle :: proc(lpConsoleTitle: win.LPCSTR) -> win.BOOL ---
 }
 
-// does not work. just here so I can cleanly quit the program
-setup_console :: proc() {
-	when ODIN_DEBUG {
-		if win.AllocConsole() == false {
-			fmt.println("error creating console")
-			return
-		}
-		SetConsoleTitle("fish bot\x00") // this creates the console and makes correct title but no stouts get logged
-		fmt.println("made new console")
-	}
-}
 // add a passable variable here.
 alert :: proc(message: string) {
 	log_warn("alert!!!")
