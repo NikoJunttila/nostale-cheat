@@ -1,6 +1,3 @@
-//TODO way to make this better would to make the cooked item ID more dynamic so we start manually cooking and then start the loop with item id after getting first eff_s
-// eff_s does not have item ID so we need to check for sent packets when we start cooking item
-// while doing this we could also figure out the mode we are currently using
 package payload
 
 import "core:fmt"

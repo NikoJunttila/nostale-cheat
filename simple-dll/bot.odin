@@ -73,14 +73,8 @@ init_bot :: proc() {
 	} else {
 		log_info("failed to get id")
 	}
-	sp, ok2 := get_player_sp_internal(cast(^u8)modinfo.lpBaseOfDll, u32(modinfo.SizeOfImage))
-	if ok2 {
-		log_info(fmt.tprintf("player sp level: %d", sp^))
-	} else {
-		log_info("failed to get sp level")
-	}
-	ok3 := get_packetlogger_addrs(cast(^u8)modinfo.lpBaseOfDll, u32(modinfo.SizeOfImage))
-	if ok3 {
+	ok = get_packetlogger_addrs(cast(^u8)modinfo.lpBaseOfDll, u32(modinfo.SizeOfImage))
+	if ok {
 		init_packetlogger(&packet_queue, &send_queue)
 		hook_recv()
 		hook_send()
@@ -108,17 +102,10 @@ update_bot_sp_level :: proc() {
 		log_error("failed to get sp level")
 	}
 	bot.playerSP = sp^
-
 }
 
 bot_tick :: proc() {
-	if bot.mode == .PAUSED {
-		if len(bot.skill_que) != 0 {
-			//clean que. will this cause memory leaks?
-			clear(&bot.skill_que)
-		}
-		return
-	}
+	if bot.mode == .PAUSED do return
 	if len(bot.skill_que) != 0 {
 		next := bot.skill_que[0]
 		if time.since(next.castTime) > 0 {
@@ -277,9 +264,9 @@ handleC_map :: proc(words: []string) {
 
 bot_pause :: proc() {
 	bot.mode = .PAUSED
-	// flush any queued skills
 	bot.currentDelay = 0
 	log_info("[F5] paused")
+	// flush any queued skills
 	reset_skill_que()
 }
 
@@ -298,7 +285,7 @@ reset_skill_que :: proc() {
 
 
 // should find admin entrance but not really. useless at the moment for this purpose.
-// TODO: log all in entries to a file so we can analyze them?
+// log all in entries to a file so we can analyze them?
 handleIN :: proc(line: []string) {
 	if len(line) < 9 do return
 	if line[1] != "1" do return // actual player in
