@@ -2,6 +2,25 @@ making a bot for nostale.
 
 new os package has some serious problems with the 32bit windows. quitly crashing everywhere.
 
+## get nice names in GUI
+
+add this kind of users.json to simple-dll dir
+with correct ids. easy to get ids from logs or other packet loggers
+[
+  {
+    "username": "ran",
+    "id": "3"
+  },
+  {
+    "username": "WK_BUFFER",
+    "id": "8"
+  },
+  {
+    "username": "HOLY_BUFFER",
+    "id": "8"
+  }
+]
+
 ## linux injection inside proton
 
 my main account folder.
@@ -39,3 +58,5 @@ cp alert.wav /home/derp/.steam/steam/steamapps/compatdata/4240740151/pfx/drive_c
 
 This is a project written with odin for injecting nostale video game that is 32bit with a .dll file.
 This targets windows environment only but usually is ran in linux through proton.
+
+

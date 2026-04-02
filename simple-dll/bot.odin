@@ -51,6 +51,7 @@ Skill_que :: struct {
 Bot :: struct {
 	playerID:      string,
 	playerSP:      u8,
+	username:      string,
 	level:         int,
 	mode:          Mode,
 	state:         BotState,
@@ -82,8 +83,11 @@ init_bot :: proc() {
 	} else {
 		log_warn("failed to get packetlogger addresses")
 	}
+
+	idSTR := fmt.aprintf("%d", id^)
 	bot = Bot {
-		playerID    = fmt.aprintf("%d", id^),
+		playerID    = idSTR,
+		username    = get_username(idSTR),
 		level       = 93, // hardcoded until I find offsets for this
 		mode        = .BUFFING,
 		state       = DPSCheckState{},

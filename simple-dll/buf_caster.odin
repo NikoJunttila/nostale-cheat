@@ -1,7 +1,6 @@
 package payload
 
 import "core:fmt"
-import "core:strings"
 import "core:time"
 
 // player id. hardcoded to be my main
