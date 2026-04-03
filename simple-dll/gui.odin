@@ -184,18 +184,8 @@ update_gui :: proc() {
 					} else {
 						mu.label(&gui_ctx, "REWARDS: PENDING")
 					}
-				}
-				mu.layout_row(&gui_ctx, {-1}, 0)
-				mu.label(&gui_ctx, "Top DMG Players:")
-				for p in state.sorted_raid_list {
-					mu.label(&gui_ctx, fmt.tprintf("%s: %d", p.name, p.dmg))
-				}
-				
-				if .SUBMIT in mu.button(&gui_ctx, "Reset DMG List") {
-					new_state := state
-					DPS_reset_raid_list(&new_state)
-					DPS_rebuild_sorted_list(&new_state)
-					bot.state = new_state
+				} else {
+					mu.label(&gui_ctx, "STATUS: Waiting for ic / asgobas")
 				}
 			}
 		}
@@ -215,8 +205,32 @@ update_gui :: proc() {
 		mu.end_window(&gui_ctx)
 	}
 
+	// Damage Chart Window (only shown during DPSCheck)
+	if bot.mode == .DPSCheck {
+		if mu.begin_window(&gui_ctx, "Damage Chart", {10, 460, 280, 400}, mu.Options{.NO_CLOSE}) {
+			if state, ok := bot.state.(DPSCheckState); ok {
+				mu.layout_row(&gui_ctx, {-1}, -28)
+				mu.begin_panel(&gui_ctx, "DMG_List")
+				mu.layout_row(&gui_ctx, {-1}, -1)
+				for p, i in state.sorted_raid_list {
+					mu.label(&gui_ctx, fmt.tprintf("%d. %s : %d", i+1, p.name, p.dmg))
+				}
+				mu.end_panel(&gui_ctx)
+
+				mu.layout_row(&gui_ctx, {-1}, 0)
+				if .SUBMIT in mu.button(&gui_ctx, "Reset DMG List") {
+					new_state := state
+					DPS_reset_raid_list(&new_state)
+					DPS_rebuild_sorted_list(&new_state)
+					bot.state = new_state
+				}
+			}
+			mu.end_window(&gui_ctx)
+		}
+	}
+
 	opts := mu.Options{.NO_CLOSE}
-	if mu.window(&gui_ctx, "Log Window", {300, 10, 350, 440}, opts) {
+	if mu.begin_window(&gui_ctx, "Log Window", {300, 10, 480, 440}, opts) {
 		mu.layout_row(&gui_ctx, {-1}, -28)
 		mu.begin_panel(&gui_ctx, "Log")
 		mu.layout_row(&gui_ctx, {-1}, -1)
@@ -227,6 +241,7 @@ update_gui :: proc() {
 			gui_log_buf_updated = false
 		}
 		mu.end_panel(&gui_ctx)
+		mu.end_window(&gui_ctx)
 	}
 
 	mu.end(&gui_ctx)

@@ -1,6 +1,3 @@
-whole dps mode needs redoing
-combine dps calculator with IC and have button to reset things
-
-raid mode somehow working with gui?
+example-Nostale_Bot functionalities implemented so actually calling functions internally to attack or walk.
 
 ts73 bot?
