@@ -68,8 +68,8 @@ start_gui :: proc() {
 		win.WS_OVERLAPPEDWINDOW,
 		100,
 		100,
-		500,
-		900,
+		800, // w
+		900, // h
 		nil,
 		nil,
 		hInstance,
@@ -185,8 +185,18 @@ update_gui :: proc() {
 						mu.label(&gui_ctx, "REWARDS: PENDING")
 					}
 				}
-				mu.label(&gui_ctx, "List of top dmg players")
-				// reset button for damage lists
+				mu.layout_row(&gui_ctx, {-1}, 0)
+				mu.label(&gui_ctx, "Top DMG Players:")
+				for p in state.sorted_raid_list {
+					mu.label(&gui_ctx, fmt.tprintf("%s: %d", p.name, p.dmg))
+				}
+				
+				if .SUBMIT in mu.button(&gui_ctx, "Reset DMG List") {
+					new_state := state
+					DPS_reset_raid_list(&new_state)
+					DPS_rebuild_sorted_list(&new_state)
+					bot.state = new_state
+				}
 			}
 		}
 
