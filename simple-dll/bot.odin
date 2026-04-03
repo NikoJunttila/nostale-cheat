@@ -211,7 +211,6 @@ update_state :: proc() {
 	case .DPSCheck:
 		mapper := make(map[string]raid_player) //mem leaks xddd
 		DPS_state := DPSCheckState {
-			mode      = .IC,
 			raid_list = mapper,
 		}
 		bot.state = DPS_state

@@ -68,8 +68,8 @@ start_gui :: proc() {
 		win.WS_OVERLAPPEDWINDOW,
 		100,
 		100,
-		320,
 		500,
+		900,
 		nil,
 		nil,
 		hInstance,
@@ -82,8 +82,6 @@ start_gui :: proc() {
 
 	win.ShowWindow(gui_hwnd, win.SW_SHOWDEFAULT)
 	win.UpdateWindow(gui_hwnd)
-
-	log_info("GUI started")
 
 	msg: win.MSG
 	for win.GetMessageW(&msg, nil, 0, 0) > 0 {
@@ -177,8 +175,7 @@ update_gui :: proc() {
 			}
 		case .DPSCheck:
 			if state, ok := bot.state.(DPSCheckState); ok {
-				mu.label(&gui_ctx, fmt.tprintf("Type: %v", state.mode))
-				if state.mode == .IC {
+				if state.current_round > 0 {
 					mu.label(&gui_ctx, fmt.tprintf("Round: %d", state.round_number))
 					mu.label(&gui_ctx, fmt.tprintf("DMG: %d", state.current_round))
 					mu.label(&gui_ctx, fmt.tprintf("Points: %d", state.activation_points))
@@ -187,9 +184,9 @@ update_gui :: proc() {
 					} else {
 						mu.label(&gui_ctx, "REWARDS: PENDING")
 					}
-				} else if state.mode == .RAID {
-					mu.label(&gui_ctx, "RAID data active")
 				}
+				mu.label(&gui_ctx, "List of top dmg players")
+				// reset button for damage lists
 			}
 		}
 
