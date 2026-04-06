@@ -26,6 +26,7 @@ MobGrindCache :: struct {
 mob_grind_cache: MobGrindCache
 
 refresh_mob_grind_cache :: proc() {
+	log_info(fmt.tprintf("refreshing %d entities and %d items", len(mob_grind_cache.entities), len(mob_grind_cache.items)))
 	for &e in mob_grind_cache.entities {
 		delete(e.name)
 	}
@@ -33,6 +34,7 @@ refresh_mob_grind_cache :: proc() {
 	for &i in mob_grind_cache.items {
 		delete(i.name)
 	}
+
 	delete(mob_grind_cache.items)
 	mob_grind_cache.entities = get_entities()
 	mob_grind_cache.items = get_items()

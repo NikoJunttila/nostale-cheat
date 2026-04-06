@@ -36,42 +36,53 @@ package payload
 //   2. for each offset except the last: addr = *(u32*)(addr + offset)
 //   3. return addr + last_offset                          [final add, NOT deref]
 
+import win "core:sys/windows"
 import "core:strings"
 
-// ---------------------------------------------------------------------------
-// read_ptr – identical logic to the C++ ReadPointer in memscan.c
-// ---------------------------------------------------------------------------
+foreign import kernel32 "system:Kernel32.lib"
 
-read_ptr :: proc(base_offset: uintptr, offsets: []uintptr) -> uintptr {
-	mi := getModuleInfo()
-	image_base := uintptr(mi.lpBaseOfDll)
-
-	// Step 1: add image base then dereference
-	addr := uintptr((cast(^u32)(image_base + base_offset))^)
-
-	// Step 2: walk all offsets except the last, dereferencing at each step
-	for i in 0 ..< len(offsets) - 1 {
-		addr = uintptr((cast(^u32)(addr + offsets[i]))^)
-	}
-
-	// Step 3: add final offset (not dereferenced)
-	return addr + offsets[len(offsets) - 1]
+@(default_calling_convention="system")
+foreign kernel32 {
+	IsBadReadPtr :: proc(lp: rawptr, ucb: win.UINT_PTR) -> win.BOOL ---
+	IsBadStringPtrA :: proc(lpsz: win.LPCSTR, ucchMax: win.UINT_PTR) -> win.BOOL ---
 }
 
-// safe_read_ptr – like read_ptr but returns 0 on null pointer at any step
+// ---------------------------------------------------------------------------
+// Safe Memory Reading (Prevents DLL crashes on invalid pointers)
+// ---------------------------------------------------------------------------
+
+// safe_deref reads a u32 from addr, returning false if unmapped to prevent page faults
+safe_deref_u32 :: proc(addr: uintptr, val: ^u32) -> bool {
+	if IsBadReadPtr(rawptr(addr), 4) do return false
+	val^ = (cast(^u32)addr)^
+	return true
+}
+
+safe_deref_i16 :: proc(addr: uintptr, val: ^i16) -> bool {
+	if IsBadReadPtr(rawptr(addr), 2) do return false
+	val^ = (cast(^i16)addr)^
+	return true
+}
+
+// ---------------------------------------------------------------------------
+// read_ptr – Walks a pointer chain safely
+// ---------------------------------------------------------------------------
+
+// safe_read_ptr – Walks the pointer chain, returns 0 if any step is unmapped/null
 safe_read_ptr :: proc(base_offset: uintptr, offsets: []uintptr) -> uintptr {
 	mi := getModuleInfo()
 	image_base := uintptr(mi.lpBaseOfDll)
 
-	addr := uintptr((cast(^u32)(image_base + base_offset))^)
+	addr: u32
+	if !safe_deref_u32(image_base + base_offset, &addr) do return 0
 	if addr == 0 do return 0
 
 	for i in 0 ..< len(offsets) - 1 {
-		addr = uintptr((cast(^u32)(addr + offsets[i]))^)
+		if !safe_deref_u32(uintptr(addr) + offsets[i], &addr) do return 0
 		if addr == 0 do return 0
 	}
 
-	return addr + offsets[len(offsets) - 1]
+	return uintptr(addr) + offsets[len(offsets) - 1]
 }
 
 // ---------------------------------------------------------------------------
@@ -99,34 +110,42 @@ count_alive_entities :: proc(entities: []Entity) -> int {
 }
 
 // get_entities returns a slice of every valid entity currently in the list.
-// The caller owns the returned slice (call delete() when done).
-// Max 256 entries is a safe upper bound for Nostale maps.
 get_entities :: proc() -> []Entity {
-	list_base  := read_ptr(0x003566D8, []uintptr{0xEA4, 0x4, 0x5E4, 0x0})
-	count_base := read_ptr(0x003582C0, []uintptr{0x8, 0x4, 0x60, 0x4, 0x608})
+	// Use safe_read_ptr
+	list_base  := safe_read_ptr(0x003566D8, []uintptr{0xEA4, 0x4, 0x5E4, 0x0})
+	count_base := safe_read_ptr(0x003582C0, []uintptr{0x8, 0x4, 0x60, 0x4, 0x608})
 
 	if list_base == 0 || count_base == 0 do return nil
 
-	count := int((cast(^u32)(count_base))^) - 1
+	raw_count: u32
+	if !safe_deref_u32(count_base, &raw_count) do return nil
+
+	count := int(raw_count) - 1
 	if count <= 0 || count > 256 do return nil
 
 	result := make([dynamic]Entity)
 
 	for i in 0 ..< count {
-		ptr := (cast(^u32)(list_base + uintptr(i) * 4))^
+		ptr: u32
+		if !safe_deref_u32(list_base + uintptr(i) * 4, &ptr) do break
 		if ptr == 0 do break
 
-		status := (cast(^u32)(uintptr(ptr) + 0x08))^
-		ex     := (cast(^i16)(uintptr(ptr) + 0x0C))^
-		ey     := (cast(^i16)(uintptr(ptr) + 0x0E))^
+		status: u32
+		if !safe_deref_u32(uintptr(ptr) + 0x08, &status) do break
+		
+		ex, ey: i16
+		if !safe_deref_i16(uintptr(ptr) + 0x0C, &ex) do break
+		if !safe_deref_i16(uintptr(ptr) + 0x0E, &ey) do break
 
 		// name: *(u32*)( *(u32*)(ptr + 0x1BC) + 0x04 )
-		name_chain := (cast(^u32)(uintptr(ptr) + 0x1BC))^
-		name_str   := ""
-		if name_chain != 0 {
-			name_ptr := (cast(^u32)(uintptr(name_chain) + 0x04))^
-			if name_ptr != 0 {
-				name_str = strings.clone_from_cstring(cast(cstring)rawptr(uintptr(name_ptr)))
+		name_str := ""
+		name_chain: u32
+		if safe_deref_u32(uintptr(ptr) + 0x1BC, &name_chain) && name_chain != 0 {
+			name_ptr: u32
+			if safe_deref_u32(uintptr(name_chain) + 0x04, &name_ptr) && name_ptr != 0 {
+				if !IsBadStringPtrA(cast(win.LPCSTR)rawptr(uintptr(name_ptr)), 255) {
+					name_str = strings.clone_from_cstring(cast(cstring)rawptr(uintptr(name_ptr)))
+				}
 			}
 		}
 
@@ -154,32 +173,38 @@ Item :: struct {
 }
 
 // get_items returns every drop currently visible on the map.
-// The caller owns the returned slice.
 get_items :: proc() -> []Item {
-	list_base  := read_ptr(0x003566D8, []uintptr{0xEB0, 0x4, 0x5C4, 0x0})
-	count_base := read_ptr(0x003582C0, []uintptr{0x8, 0x4, 0x7C, 0x4, 0x568})
+	list_base  := safe_read_ptr(0x003566D8, []uintptr{0xEB0, 0x4, 0x5C4, 0x0})
+	count_base := safe_read_ptr(0x003582C0, []uintptr{0x8, 0x4, 0x7C, 0x4, 0x568})
 
 	if list_base == 0 || count_base == 0 do return nil
 
-	count := int((cast(^u32)(count_base))^)
+	raw_count: u32
+	if !safe_deref_u32(count_base, &raw_count) do return nil
+
+	count := int(raw_count)
 	if count <= 0 || count > 256 do return nil
 
 	result := make([dynamic]Item)
 
 	for i in 0 ..< count {
-		ptr := (cast(^u32)(list_base + uintptr(i) * 4))^
+		ptr: u32
+		if !safe_deref_u32(list_base + uintptr(i) * 4, &ptr) do continue
 		if ptr == 0 do continue
 
-		ix := (cast(^i16)(uintptr(ptr) + 0x0C))^
-		iy := (cast(^i16)(uintptr(ptr) + 0x0E))^
+		ix, iy: i16
+		if !safe_deref_i16(uintptr(ptr) + 0x0C, &ix) do continue
+		if !safe_deref_i16(uintptr(ptr) + 0x0E, &iy) do continue
 
 		// name: *(u32*)( *(u32*)(ptr + 0xC4) + 0x38 )
 		name_str := ""
-		chain := (cast(^u32)(uintptr(ptr) + 0xC4))^
-		if chain != 0 {
-			name_ptr := (cast(^u32)(uintptr(chain) + 0x38))^
-			if name_ptr != 0 {
-				name_str = strings.clone_from_cstring(cast(cstring)rawptr(uintptr(name_ptr)))
+		chain: u32
+		if safe_deref_u32(uintptr(ptr) + 0xC4, &chain) && chain != 0 {
+			name_ptr: u32
+			if safe_deref_u32(uintptr(chain) + 0x38, &name_ptr) && name_ptr != 0 {
+				if !IsBadStringPtrA(cast(win.LPCSTR)rawptr(uintptr(name_ptr)), 255) {
+					name_str = strings.clone_from_cstring(cast(cstring)rawptr(uintptr(name_ptr)))
+				}
 			}
 		}
 
@@ -200,12 +225,14 @@ PlayerPos :: struct {
 
 get_player_pos :: proc() -> PlayerPos {
 	// ReadPtr(0x004F4904, {0x20, 0x0C}) gives the address of player X
-	pos_addr := read_ptr(0x004F4904, []uintptr{0x20, 0x0C})
+	pos_addr := safe_read_ptr(0x004F4904, []uintptr{0x20, 0x0C})
 	if pos_addr == 0 do return {}
-	return PlayerPos{
-		x = (cast(^i16)(pos_addr))^,
-		y = (cast(^i16)(pos_addr + 2))^,
-	}
+	
+	px, py: i16
+	safe_deref_i16(pos_addr, &px)
+	safe_deref_i16(pos_addr + 2, &py)
+	
+	return PlayerPos{x = px, y = py}
 }
 
 // ---------------------------------------------------------------------------
