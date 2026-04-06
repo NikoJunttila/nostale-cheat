@@ -97,7 +97,7 @@ start_gui :: proc() {
 update_gui :: proc() {
 	mu.begin(&gui_ctx)
 
-	if mu.begin_window(&gui_ctx, "Bot Control", {10, 10, 280, 440}) {
+	if mu.begin_window(&gui_ctx, "Bot Control", {10, 10, 280, 440}, mu.Options{.NO_CLOSE}) {
 		// Player info display
 		mu.layout_row(&gui_ctx, {-1}, 0)
 		name_to_show := bot.username
@@ -211,9 +211,9 @@ update_gui :: proc() {
 			if state, ok := bot.state.(DPSCheckState); ok {
 				mu.layout_row(&gui_ctx, {-1}, -28)
 				mu.begin_panel(&gui_ctx, "DMG_List")
-				mu.layout_row(&gui_ctx, {-1}, -1)
+				mu.layout_row(&gui_ctx, {-1}, 0)
 				for p, i in state.sorted_raid_list {
-					mu.label(&gui_ctx, fmt.tprintf("%d. %s : %d", i+1, p.name, p.dmg))
+					mu.label(&gui_ctx, fmt.tprintf("%d. %s : %d", i + 1, p.name, p.dmg))
 				}
 				mu.end_panel(&gui_ctx)
 

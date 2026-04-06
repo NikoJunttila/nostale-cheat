@@ -181,7 +181,6 @@ parse_str_int :: proc(str: string) -> i32 {
 	dmg_str := str
 	dmg, ok := strconv.parse_int(dmg_str)
 	if !ok {
-		log_warn(fmt.tprintf("failed to parse %s", dmg_str))
 		return 0
 	}
 	return i32(dmg)

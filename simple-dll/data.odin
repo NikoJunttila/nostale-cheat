@@ -35,8 +35,6 @@ getModuleInfo :: proc() -> MODULEINFO {
 	ok := GetModuleInformation(win.GetCurrentProcess(), hModule, &modinfo, size_of(modinfo))
 	if !ok {
 		log_warn("failed to get module information")
-	} else {
-		log_info(fmt.aprintf("found module info stuff %d", modinfo.lpBaseOfDll))
 	}
 	return modinfo
 }

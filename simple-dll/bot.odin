@@ -79,7 +79,6 @@ init_bot :: proc() {
 		init_packetlogger(&packet_queue, &send_queue)
 		hook_recv()
 		hook_send()
-		log_info("packetlogger hooked")
 	} else {
 		log_warn("failed to get packetlogger addresses")
 	}
