@@ -14,6 +14,30 @@ gui_log_buf: [1 << 16]byte
 gui_log_buf_len: int
 gui_log_buf_updated: bool
 
+// ---------------------------------------------------------------------------
+// MOB_GRINDING: cached entity / item snapshot
+// ---------------------------------------------------------------------------
+
+MobGrindCache :: struct {
+	entities: []Entity,
+	items:    []Item,
+}
+
+mob_grind_cache: MobGrindCache
+
+refresh_mob_grind_cache :: proc() {
+	for &e in mob_grind_cache.entities {
+		delete(e.name)
+	}
+	delete(mob_grind_cache.entities)
+	for &i in mob_grind_cache.items {
+		delete(i.name)
+	}
+	delete(mob_grind_cache.items)
+	mob_grind_cache.entities = get_entities()
+	mob_grind_cache.items = get_items()
+}
+
 write_gui_log :: proc(str: string) {
 	if gui_log_buf_len + len(str) + 1 > len(gui_log_buf) {
 		gui_log_buf_len = 0
@@ -188,6 +212,23 @@ update_gui :: proc() {
 					mu.label(&gui_ctx, "STATUS: Waiting for ic / asgobas")
 				}
 			}
+		case .MOB_GRINDING:
+			pos := get_player_pos()
+			mu.layout_row(&gui_ctx, {-1}, 0)
+			mu.label(&gui_ctx, fmt.tprintf("Pos: (%d, %d)", pos.x, pos.y))
+			mu.layout_row(&gui_ctx, {-1}, 0)
+			mu.label(
+				&gui_ctx,
+				fmt.tprintf(
+					"Enemies: %d   Drops: %d",
+					count_alive_entities(mob_grind_cache.entities),
+					len(mob_grind_cache.items),
+				),
+			)
+			mu.layout_row(&gui_ctx, {-1}, 0)
+			if .SUBMIT in mu.button(&gui_ctx, "Refresh Lists") {
+				refresh_mob_grind_cache()
+			}
 		}
 
 		// Actions
@@ -225,6 +266,69 @@ update_gui :: proc() {
 					bot.state = new_state
 				}
 			}
+			mu.end_window(&gui_ctx)
+		}
+	}
+
+	// -----------------------------------------------------------------------
+	// MOB_GRINDING window – entity list + item list with click-to-act buttons
+	// -----------------------------------------------------------------------
+	if bot.mode == .MOB_GRINDING {
+		if mu.begin_window(
+			&gui_ctx,
+			"Mob Grinding - Map Entities",
+			{10, 460, 760, 420},
+			mu.Options{.NO_CLOSE},
+		) {
+			pos := get_player_pos()
+
+			// ---- Enemies ----
+			mu.layout_row(&gui_ctx, {-1}, 0)
+			mu.label(
+				&gui_ctx,
+				fmt.tprintf(
+					"Enemies  (%d alive  /  %d total)",
+					count_alive_entities(mob_grind_cache.entities),
+					len(mob_grind_cache.entities),
+				),
+			)
+
+			mu.layout_row(&gui_ctx, {-1}, 175)
+			mu.begin_panel(&gui_ctx, "EnemyList")
+			for e in mob_grind_cache.entities {
+				if !entity_alive(e) do continue
+				dist := chebyshev_dist(pos.x, pos.y, e.x, e.y)
+				mu.layout_row(&gui_ctx, {-1}, 0)
+				btn_lbl := fmt.tprintf("[Attack]  %s  (%d, %d)  dist=%d", e.name, e.x, e.y, dist)
+				if .SUBMIT in mu.button(&gui_ctx, btn_lbl) {
+					game_attack_monster(e.ptr, 1)
+				}
+			}
+			mu.end_panel(&gui_ctx)
+
+			// ---- Items ----
+			mu.layout_row(&gui_ctx, {-1}, 0)
+			mu.label(&gui_ctx, fmt.tprintf("Drops  (%d)", len(mob_grind_cache.items)))
+
+			mu.layout_row(&gui_ctx, {-1}, -1)
+			mu.begin_panel(&gui_ctx, "ItemList")
+			for item in mob_grind_cache.items {
+				if item.ptr == 0 do continue
+				dist := chebyshev_dist(pos.x, pos.y, item.x, item.y)
+				mu.layout_row(&gui_ctx, {-1}, 0)
+				btn_lbl := fmt.tprintf(
+					"[Loot]  %s  (%d, %d)  dist=%d",
+					item.name,
+					item.x,
+					item.y,
+					dist,
+				)
+				if .SUBMIT in mu.button(&gui_ctx, btn_lbl) {
+					game_collect(item.ptr)
+				}
+			}
+			mu.end_panel(&gui_ctx)
+
 			mu.end_window(&gui_ctx)
 		}
 	}
