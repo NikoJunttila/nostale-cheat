@@ -38,6 +38,7 @@ package payload
 
 import win "core:sys/windows"
 import "core:strings"
+import "core:fmt"
 
 foreign import kernel32 "system:Kernel32.lib"
 
@@ -111,31 +112,47 @@ count_alive_entities :: proc(entities: []Entity) -> int {
 
 // get_entities returns a slice of every valid entity currently in the list.
 get_entities :: proc() -> []Entity {
+
 	// Use safe_read_ptr
 	list_base  := safe_read_ptr(0x003566D8, []uintptr{0xEA4, 0x4, 0x5E4, 0x0})
 	count_base := safe_read_ptr(0x003582C0, []uintptr{0x8, 0x4, 0x60, 0x4, 0x608})
 
+	log_info(fmt.tprintf("[get_entities] list_base: %x count_base: %x", list_base, count_base))
+
 	if list_base == 0 || count_base == 0 do return nil
 
 	raw_count: u32
-	if !safe_deref_u32(count_base, &raw_count) do return nil
+	if !safe_deref_u32(count_base, &raw_count) {
+		log_info("[get_entities] Failed to read count from count_base")
+		return nil
+	}
 
 	count := int(raw_count) - 1
-	if count <= 0 || count > 256 do return nil
+	log_info(fmt.tprintf("[get_entities] count_base value: %d (count loop size: %d)", raw_count, count))
+
+	if count <= 0 || count > 10000 {
+		log_info("[get_entities] Count invalid, returning early")
+		return nil
+	}
 
 	result := make([dynamic]Entity)
 
 	for i in 0 ..< count {
 		ptr: u32
 		if !safe_deref_u32(list_base + uintptr(i) * 4, &ptr) do break
-		if ptr == 0 do break
+		if ptr == 0 {
+			// Some slots might legitimately be null if an entity despawns
+			continue
+		}
 
 		status: u32
-		if !safe_deref_u32(uintptr(ptr) + 0x08, &status) do break
+		if !safe_deref_u32(uintptr(ptr) + 0x08, &status) {
+			continue
+		}
 		
 		ex, ey: i16
-		if !safe_deref_i16(uintptr(ptr) + 0x0C, &ex) do break
-		if !safe_deref_i16(uintptr(ptr) + 0x0E, &ey) do break
+		if !safe_deref_i16(uintptr(ptr) + 0x0C, &ex) do continue
+		if !safe_deref_i16(uintptr(ptr) + 0x0E, &ey) do continue
 
 		// name: *(u32*)( *(u32*)(ptr + 0x1BC) + 0x04 )
 		name_str := ""
@@ -157,6 +174,8 @@ get_entities :: proc() -> []Entity {
 			name   = name_str,
 		})
 	}
+	
+	log_info(fmt.tprintf("[get_entities] Successfully collected %d entities", len(result)))
 
 	return result[:]
 }
@@ -177,13 +196,23 @@ get_items :: proc() -> []Item {
 	list_base  := safe_read_ptr(0x003566D8, []uintptr{0xEB0, 0x4, 0x5C4, 0x0})
 	count_base := safe_read_ptr(0x003582C0, []uintptr{0x8, 0x4, 0x7C, 0x4, 0x568})
 
+	log_info(fmt.tprintf("[get_items] list_base: %x count_base: %x", list_base, count_base))
+
 	if list_base == 0 || count_base == 0 do return nil
 
 	raw_count: u32
-	if !safe_deref_u32(count_base, &raw_count) do return nil
+	if !safe_deref_u32(count_base, &raw_count) {
+		log_info("[get_items] Failed to read count from count_base")
+		return nil
+	}
 
 	count := int(raw_count)
-	if count <= 0 || count > 256 do return nil
+	log_info(fmt.tprintf("[get_items] raw_count = %d", count))
+
+	if count <= 0 || count > 10000 {
+		log_info("[get_items] invalid count, returning early")
+		return nil
+	}
 
 	result := make([dynamic]Item)
 
@@ -211,6 +240,7 @@ get_items :: proc() -> []Item {
 		append(&result, Item{ptr = ptr, x = ix, y = iy, name = name_str})
 	}
 
+	log_info(fmt.tprintf("[get_items] Successfully collected %d items", len(result)))
 	return result[:]
 }
 

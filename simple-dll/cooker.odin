@@ -33,9 +33,8 @@ cooking_sayi :: proc(words: []string) {
 	if words[2] != bot.playerID do return
 	if words[3] != "10" do return
 	if words[4] != "158" do return
-	log_info(fmt.tprintf("alert: %s", strings.join(words, " ", context.temp_allocator)))
+	log_info("out of incredients")
 	bot_pause()
-	alert("out of incredients")
 }
 
 currently_cooking := ""
@@ -69,7 +68,7 @@ chopping :: proc(words: []string) {
 	if currently_chopping != "" do delete(currently_cooking)
 	currently_chopping = words[4]
 	packet := chop_packet()
-	add_packet_skill_que(6000, packet, true)
+	add_packet_skill_que(6000, packet)
 }
 
 // eff_s 1 355473 7790 0
@@ -83,7 +82,7 @@ cook_handle_eff_s :: proc(words: []string) {
 	add_bot_skill_que(1000, "3")
 	cast_cooking_buffs()
 	packet := cooking_packet()
-	add_packet_skill_que(6000, packet, true)
+	add_packet_skill_que(6000, packet)
 	// delete(packet) //I do not care about this leak
 }
 

@@ -50,7 +50,6 @@ handle_eff_buff :: proc(words: []string) {
 	if words[1] != "1" do return
 	if words[2] != TARGET_ID do return
 	if words[3] != THUMPS_UP_ID do return
-	log_info("casting buffs")
 	switch bot.buffing {
 	case .HOLY:
 		cast_buff_skills(&holy_buffs)
