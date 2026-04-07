@@ -256,7 +256,7 @@ update_gui :: proc() {
 				mu.begin_panel(&gui_ctx, "DMG_List")
 				mu.layout_row(&gui_ctx, {-1}, 0)
 				for p, i in state.sorted_raid_list {
-					mu.label(&gui_ctx, fmt.tprintf("%d. %s : %d", i + 1, p.name, p.dmg))
+					mu.label(&gui_ctx, fmt.tprintf("%d. %s : %.1fM", i + 1, p.name, f64(p.dmg) / 1_000_000.0))
 				}
 				mu.end_panel(&gui_ctx)
 

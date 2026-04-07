@@ -40,29 +40,32 @@ import win "core:sys/windows"
 import "core:strings"
 import "core:fmt"
 
-foreign import kernel32 "system:Kernel32.lib"
-
-@(default_calling_convention="system")
-foreign kernel32 {
-	IsBadReadPtr :: proc(lp: rawptr, ucb: win.UINT_PTR) -> win.BOOL ---
-	IsBadStringPtrA :: proc(lpsz: win.LPCSTR, ucchMax: win.UINT_PTR) -> win.BOOL ---
-}
-
 // ---------------------------------------------------------------------------
 // Safe Memory Reading (Prevents DLL crashes on invalid pointers)
 // ---------------------------------------------------------------------------
 
-// safe_deref reads a u32 from addr, returning false if unmapped to prevent page faults
+// safe_deref uses ReadProcessMemory (like the C++ example) which is reliable in
+// injected DLL contexts. IsBadReadPtr was deprecated and gave false positives.
 safe_deref_u32 :: proc(addr: uintptr, val: ^u32) -> bool {
-	if IsBadReadPtr(rawptr(addr), 4) do return false
-	val^ = (cast(^u32)addr)^
-	return true
+	bytes_read: win.SIZE_T
+	return win.ReadProcessMemory(
+		win.GetCurrentProcess(),
+		rawptr(addr),
+		val,
+		4,
+		&bytes_read,
+	) != win.FALSE && bytes_read == 4
 }
 
 safe_deref_i16 :: proc(addr: uintptr, val: ^i16) -> bool {
-	if IsBadReadPtr(rawptr(addr), 2) do return false
-	val^ = (cast(^i16)addr)^
-	return true
+	bytes_read: win.SIZE_T
+	return win.ReadProcessMemory(
+		win.GetCurrentProcess(),
+		rawptr(addr),
+		val,
+		2,
+		&bytes_read,
+	) != win.FALSE && bytes_read == 2
 }
 
 // ---------------------------------------------------------------------------
@@ -84,6 +87,42 @@ safe_read_ptr :: proc(base_offset: uintptr, offsets: []uintptr) -> uintptr {
 	}
 
 	return uintptr(addr) + offsets[len(offsets) - 1]
+}
+
+// debug_read_ptr – same as safe_read_ptr but logs every intermediate step.
+// Temporarily swap calls to this to diagnose which step in the chain fails.
+debug_read_ptr :: proc(label: string, base_offset: uintptr, offsets: []uintptr) -> uintptr {
+	mi := getModuleInfo()
+	image_base := uintptr(mi.lpBaseOfDll)
+	log_info(fmt.tprintf("[dbg:%s] image_base=%x  reading [%x]", label, image_base, image_base + base_offset))
+
+	addr: u32
+	if !safe_deref_u32(image_base + base_offset, &addr) {
+		log_info(fmt.tprintf("[dbg:%s] FAIL step0: RPM failed on %x", label, image_base + base_offset))
+		return 0
+	}
+	if addr == 0 {
+		log_info(fmt.tprintf("[dbg:%s] FAIL step0: value is null at %x", label, image_base + base_offset))
+		return 0
+	}
+	log_info(fmt.tprintf("[dbg:%s] step0 -> %x", label, addr))
+
+	for i in 0 ..< len(offsets) - 1 {
+		next := uintptr(addr) + offsets[i]
+		prev := addr
+		if !safe_deref_u32(next, &addr) {
+			log_info(fmt.tprintf("[dbg:%s] FAIL step%d: RPM failed on [%x+%x]=%x", label, i+1, prev, offsets[i], next))
+			return 0
+		}
+		if addr == 0 {
+			log_info(fmt.tprintf("[dbg:%s] FAIL step%d: null at [%x+%x]=%x", label, i+1, prev, offsets[i], next))
+			return 0
+		}
+		log_info(fmt.tprintf("[dbg:%s] step%d (+%x) -> %x", label, i+1, offsets[i], addr))
+	}
+	result := uintptr(addr) + offsets[len(offsets) - 1]
+	log_info(fmt.tprintf("[dbg:%s] final +%x -> %x", label, offsets[len(offsets)-1], result))
+	return result
 }
 
 // ---------------------------------------------------------------------------
@@ -113,9 +152,9 @@ count_alive_entities :: proc(entities: []Entity) -> int {
 // get_entities returns a slice of every valid entity currently in the list.
 get_entities :: proc() -> []Entity {
 
-	// Use safe_read_ptr
-	list_base  := safe_read_ptr(0x003566D8, []uintptr{0xEA4, 0x4, 0x5E4, 0x0})
-	count_base := safe_read_ptr(0x003582C0, []uintptr{0x8, 0x4, 0x60, 0x4, 0x608})
+	// DEBUG: verbose logging to find broken offset chain
+	list_base  := debug_read_ptr("ent_list",  0x003566D8, []uintptr{0xEA4, 0x4, 0x5E4, 0x0})
+	count_base := debug_read_ptr("ent_count", 0x003582C0, []uintptr{0x8, 0x4, 0x60, 0x4, 0x608})
 
 	log_info(fmt.tprintf("[get_entities] list_base: %x count_base: %x", list_base, count_base))
 
@@ -160,8 +199,12 @@ get_entities :: proc() -> []Entity {
 		if safe_deref_u32(uintptr(ptr) + 0x1BC, &name_chain) && name_chain != 0 {
 			name_ptr: u32
 			if safe_deref_u32(uintptr(name_chain) + 0x04, &name_ptr) && name_ptr != 0 {
-				if !IsBadStringPtrA(cast(win.LPCSTR)rawptr(uintptr(name_ptr)), 255) {
-					name_str = strings.clone_from_cstring(cast(cstring)rawptr(uintptr(name_ptr)))
+				// Read up to 255 chars via ReadProcessMemory to avoid a crash on bad string ptr
+				buf: [256]byte
+				br: win.SIZE_T
+				if win.ReadProcessMemory(win.GetCurrentProcess(), rawptr(uintptr(name_ptr)), &buf[0], 255, &br) != win.FALSE && br > 0 {
+					buf[br] = 0
+					name_str = strings.clone_from_cstring(cast(cstring)&buf[0])
 				}
 			}
 		}
@@ -193,8 +236,8 @@ Item :: struct {
 
 // get_items returns every drop currently visible on the map.
 get_items :: proc() -> []Item {
-	list_base  := safe_read_ptr(0x003566D8, []uintptr{0xEB0, 0x4, 0x5C4, 0x0})
-	count_base := safe_read_ptr(0x003582C0, []uintptr{0x8, 0x4, 0x7C, 0x4, 0x568})
+	list_base  := debug_read_ptr("item_list",  0x003566D8, []uintptr{0xEB0, 0x4, 0x5C4, 0x0})
+	count_base := debug_read_ptr("item_count", 0x003582C0, []uintptr{0x8, 0x4, 0x7C, 0x4, 0x568})
 
 	log_info(fmt.tprintf("[get_items] list_base: %x count_base: %x", list_base, count_base))
 
@@ -231,8 +274,11 @@ get_items :: proc() -> []Item {
 		if safe_deref_u32(uintptr(ptr) + 0xC4, &chain) && chain != 0 {
 			name_ptr: u32
 			if safe_deref_u32(uintptr(chain) + 0x38, &name_ptr) && name_ptr != 0 {
-				if !IsBadStringPtrA(cast(win.LPCSTR)rawptr(uintptr(name_ptr)), 255) {
-					name_str = strings.clone_from_cstring(cast(cstring)rawptr(uintptr(name_ptr)))
+				buf: [256]byte
+				br: win.SIZE_T
+				if win.ReadProcessMemory(win.GetCurrentProcess(), rawptr(uintptr(name_ptr)), &buf[0], 255, &br) != win.FALSE && br > 0 {
+					buf[br] = 0
+					name_str = strings.clone_from_cstring(cast(cstring)&buf[0])
 				}
 			}
 		}
