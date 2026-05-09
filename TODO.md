@@ -5,9 +5,15 @@ walk 35 68 1 16 // actual IC spot
 send client side to show where we are
 receive: tp 1 8141324 46 7 0
 
-zip injector + dll + sound + example.json + guide 
+---------------------------------------------------------------------------------
+
+zip injector + dll + sound + example.json + guide. when making this possible for other to use also
+
+---------------------------------------------------------------------------
 
 take the main player id from json also instead of hardcoded in buffers
+
+-------------------------------------------------------------------------
 
 /home/derp/docker/windows/shared/nostale-cheats/example-Nostale_Bot/NostaleClientX.CT
 
