@@ -7,6 +7,7 @@ import "core:time"
 
 BotState :: union {
 	DPSCheckState,
+	ICTimerState,
 	// MobGrindingState,
 	// IceFlowerState,
 }
@@ -16,6 +17,7 @@ Mode :: enum {
 	FISHING,
 	COOKING,
 	DPSCheck,
+	IC_TIMER,
 	BUFFING,
 	ICE_FLOWER,
 	MOB_GRINDING,
@@ -213,6 +215,8 @@ update_state :: proc() {
 			raid_list = mapper,
 		}
 		bot.state = DPS_state
+	case .IC_TIMER:
+		bot.state = ICTimerState{}
 	case .PAUSED:
 	}
 }
@@ -230,6 +234,8 @@ handle_packet :: proc(words: []string) {
 		handle_ice_flower_packet(words)
 	case .DPSCheck:
 		handle_DPSCheck_packet(words)
+	case .IC_TIMER:
+		handle_ic_timer_packet(words)
 	case .BUFFING:
 		handle_buff_packet(words)
 	case .COOKING:
@@ -251,7 +257,7 @@ handle_ice_flower_packet :: proc(words: []string) {
 // map changed, if fishing is due to admin
 handleC_map :: proc(words: []string) {
 	#partial switch bot.mode {
-	case .PAUSED, .DPSCheck, .BUFFING:
+	case .PAUSED, .DPSCheck, .IC_TIMER, .BUFFING:
 		//to prevent double running this. 1 is new map, 0 is old map
 		if len(words) >= 4 && words[3] == "1" {
 			recv_packet_skill_que(1000, "tcrank 1")

@@ -59,6 +59,7 @@ mode_names := [Mode]string {
 	.FISHING      = "FISHING",
 	.COOKING      = "COOKING",
 	.DPSCheck     = "DPS Check",
+	.IC_TIMER     = "IC TIMER",
 	.BUFFING      = "BUFFING",
 	.ICE_FLOWER   = "ICE FLOWER",
 	.MOB_GRINDING = "MOB GRINDING",
@@ -201,6 +202,10 @@ update_gui :: proc() {
 			}
 		case .DPSCheck:
 			if state, ok := bot.state.(DPSCheckState); ok {
+				mu.label(&gui_ctx, fmt.tprintf("Total DMG: %d", state.total_dmg))
+			}
+		case .IC_TIMER:
+			if state, ok := bot.state.(ICTimerState); ok {
 				if state.current_round > 0 {
 					mu.label(&gui_ctx, fmt.tprintf("Round: %d", state.round_number))
 					mu.label(&gui_ctx, fmt.tprintf("DMG: %d", state.current_round))
