@@ -20,24 +20,23 @@ ICTimerState :: struct {
 	round_number:      int,
 	activation_points: int,
 	rewards_achieved:  bool,
+	asgobas_event:     bool,
 }
 
 sit_down_kid :: proc() {
 	sit_packet := fmt.tprintf("rest 3 1 %d", bot.playerID)
+	log_info("sit down kid")
 	send_packet(sit_packet)
 }
 
 reset_ic :: proc() {
 	state := &bot.state.(ICTimerState)
-	state.round_number = 0
-	state.current_round = 0
-	state.total_dmg = 0
-	state.activation_points = 0
-	state.rewards_achieved = false
+	state = ICTimerState{}
 }
 
 walk_safe_spot :: proc() {
 	walk_packet := "walk 35 68 1 16"
+	log_info("walking to safe spot")
 	send_packet(walk_packet)
 }
 
@@ -103,7 +102,6 @@ use_hp_potion :: proc() {
 	send_packet(packet)
 	delete(packet)
 	hp_potion_last_use = time.now()
-	log_info("[IC] hp potion sent")
 }
 
 // su <caster_type> <caster_id> <target_type> <target_id> ... <dmg> ... <current_hp> <max_hp>
@@ -112,20 +110,22 @@ use_hp_potion :: proc() {
 IC_handle_damage_received :: proc(line: []string) {
 	if len(line) < 17 do return
 	if line[4] != bot.playerID do return
+	state := &bot.state.(ICTimerState)
+	if state.asgobas_event do return
 	dmg := parse_str_int(line[13])
 	if dmg <= 0 do return
 	current_hp := parse_str_int(line[16])
 	max_hp := parse_str_int(line[17])
 	if max_hp - current_hp < 1000 do return
-	log_info(
-		fmt.tprintf(
-			"[IC] damage taken: -%d hp=%d/%d (missing %d)",
-			dmg,
-			current_hp,
-			max_hp,
-			max_hp - current_hp,
-		),
-	)
+	// log_info(
+	// 	fmt.tprintf(
+	// 		"[IC] damage taken: -%d hp=%d/%d (missing %d)",
+	// 		dmg,
+	// 		current_hp,
+	// 		max_hp,
+	// 		max_hp - current_hp,
+	// 	),
+	// )
 	use_hp_potion()
 	if bot.playerID == HOLY_BUFFER_ID {
 		IC_cast_buffs(&ic_holy_damage_buffs, "damage")
@@ -133,23 +133,26 @@ IC_handle_damage_received :: proc(line: []string) {
 }
 
 IC_handle_msgi :: proc(words: []string) {
-	if words[2] == "384" {
+	if words[2] != "384" do return
+	state := &bot.state.(ICTimerState)
+	if state.asgobas_event {
+		//figure something out here later?
+	} else {
 		walk_safe_spot()
-		state := &bot.state.(ICTimerState)
-		log_info(
-			fmt.tprintf(
-				"Round %d ended. DMG: %d, Points: %d, Achieved: %v",
-				state.round_number,
-				state.current_round,
-				state.activation_points,
-				state.rewards_achieved,
-			),
-		)
-		state.current_round = 0 //dmg reset round
-		state.round_number += 1
-		state.activation_points = 0
-		state.rewards_achieved = false
 	}
+	log_info(
+		fmt.tprintf(
+			"Round %d ended. DMG: %d, Points: %d, Achieved: %v",
+			state.round_number,
+			state.current_round,
+			state.activation_points,
+			state.rewards_achieved,
+		),
+	)
+	state.current_round = 0 //dmg reset round
+	state.round_number += 1
+	state.activation_points = 0
+	state.rewards_achieved = false
 }
 
 //packets that start with qnamli
@@ -162,18 +165,14 @@ IC_handle_join :: proc(words: []string) {
 		add_packet_skill_que(500, join_packet_1, true)
 		add_packet_skill_que(500, join_packet_2, true)
 		log_info("joining ic")
-		state.current_round = 0 //dmg
-		state.round_number = 0
-		state.activation_points = 0
 	}
 	if words[2] == "#guri^596" {
-		//join ascobas
+		// TODO figure out the first packet
 		join_packet := "#guri^596"
 		add_packet_skill_que(1000, join_packet, true)
 		log_info("joining asgobas")
-		state.current_round = 0 //dmg
-		state.round_number = 0
-		state.activation_points = 0
+		state := &bot.state.(ICTimerState)
+		state.asgobas_event = true
 		// qnamli 51 #guri^596 2547 0 0 0 //asgobas join icon
 	}
 }

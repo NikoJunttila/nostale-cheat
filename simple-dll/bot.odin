@@ -294,6 +294,29 @@ handleC_map :: proc(words: []string) {
 		bot_pause()
 		alert("admin alert")
 	case .IC_TIMER:
+		state := &bot.state.(ICTimerState)
+		if state.round_number < 5 {
+			log_important(
+				fmt.tprintf(
+					"[IC] FAILED RUN — ended on round %d. R%d DMG: %d, Points: %d, Achieved: %v",
+					state.round_number,
+					state.round_number,
+					state.current_round,
+					state.activation_points,
+					state.rewards_achieved,
+				),
+			)
+		} else {
+			log_important(
+				fmt.tprintf(
+					"[IC] run finished — rounds: %d, last round DMG: %d, Points: %d, Achieved: %v",
+					state.round_number,
+					state.current_round,
+					state.activation_points,
+					state.rewards_achieved,
+				),
+			)
+		}
 		reset_ic()
 		sit_down_kid()
 	}
