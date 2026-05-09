@@ -26,7 +26,13 @@ MobGrindCache :: struct {
 mob_grind_cache: MobGrindCache
 
 refresh_mob_grind_cache :: proc() {
-	log_info(fmt.tprintf("refreshing %d entities and %d items", len(mob_grind_cache.entities), len(mob_grind_cache.items)))
+	log_info(
+		fmt.tprintf(
+			"refreshing %d entities and %d items",
+			len(mob_grind_cache.entities),
+			len(mob_grind_cache.items),
+		),
+	)
 	for &e in mob_grind_cache.entities {
 		delete(e.name)
 	}
@@ -157,8 +163,9 @@ update_gui :: proc() {
 			.COOKING,
 			.DPSCheck,
 			.BUFFING,
-			.ICE_FLOWER,
-			.MOB_GRINDING,
+			.IC_TIMER,
+			// .ICE_FLOWER,
+			// .MOB_GRINDING,
 		}
 
 		for m in modes {
@@ -261,7 +268,10 @@ update_gui :: proc() {
 				mu.begin_panel(&gui_ctx, "DMG_List")
 				mu.layout_row(&gui_ctx, {-1}, 0)
 				for p, i in state.sorted_raid_list {
-					mu.label(&gui_ctx, fmt.tprintf("%d. %s : %.1fM", i + 1, p.name, f64(p.dmg) / 1_000_000.0))
+					mu.label(
+						&gui_ctx,
+						fmt.tprintf("%d. %s : %.1fM", i + 1, p.name, f64(p.dmg) / 1_000_000.0),
+					)
 				}
 				mu.end_panel(&gui_ctx)
 

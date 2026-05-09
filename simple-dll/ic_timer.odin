@@ -2,6 +2,7 @@
 package payload
 
 import "core:fmt"
+import "core:time"
 
 /*
 Threshold (in action points) go as follows: x, 3*x, 6*x, 10*x
@@ -22,6 +23,20 @@ ICTimerState :: struct {
 	asgobas_round:     bool,
 }
 
+// IC holy-buffer skill lists. cast_buff_skills only fires entries whose CD is up,
+// so both lists are safe to call repeatedly.
+//
+// Off-cd rotation: cast periodically by IC_tick — no packet trigger, just whatever's ready.
+ic_holy_offcd_buffs := []Skill {
+	{key = "3", cd = cd(65)},
+	{key = "5", cd = cd(40)},
+	{key = "5", cd = cd(40)},
+	{key = "9", cd = cd(120)},
+}
+
+// Reactive rotation: cast every time the buff target receives damage during IC.
+ic_holy_damage_buffs := []Skill{{key = "1", cd = cd(3)}, {key = "7", cd = cd(20)}}
+
 handle_ic_timer_packet :: proc(words: []string) {
 	switch words[0] {
 	case "qnamli":
@@ -30,10 +45,69 @@ handle_ic_timer_packet :: proc(words: []string) {
 		IC_handle_msgi(words)
 	case "su":
 		IC_handle_su(words)
+		IC_handle_damage_received(words)
 	case "c_map":
 		handleC_map(words)
 	case "in":
 		handleIN(words)
+	}
+}
+
+// Logged variant of cast_buff_skills — emits one line per buff actually queued so the IC
+// rotations are visible without spamming when nothing fires.
+IC_cast_buffs :: proc(skills: ^[]Skill, label: string) {
+	for &s in skills {
+		if check_time(s.last_cast, s.cd) {
+			buf_skill_que(2200, s.key, s.target)
+			s.last_cast = time.now()
+			log_info(fmt.tprintf("[IC HOLY] %s buff key=%s queued", label, s.key))
+		}
+	}
+}
+
+// Periodic poll for the off-cd holy rotation. Called from bot_tick while bot.mode == .IC_TIMER.
+// cast_buff_skills already gates each skill on its own CD, so calling this every tick is safe.
+IC_tick :: proc() {
+	if bot.playerID != HOLY_BUFFER_ID do return
+	IC_cast_buffs(&ic_holy_offcd_buffs, "off-cd")
+}
+
+// HP potion bound to inventory slot 41 (hotkey 5). 500ms local cooldown to avoid spamming on continuous damage ticks.
+hp_potion_last_use: time.Time
+HP_POTION_CD :: 500 * time.Millisecond
+
+use_hp_potion :: proc() {
+	if !check_time(hp_potion_last_use, HP_POTION_CD) do return
+	packet := fmt.aprintf("u_i 1 %s 1 41 0 0", bot.playerID)
+	send_packet(packet)
+	delete(packet)
+	hp_potion_last_use = time.now()
+	log_info("[IC] hp potion sent")
+}
+
+// su <caster_type> <caster_id> <target_type> <target_id> ... <dmg> ... <current_hp> <max_hp>
+// su 3 41003 1 355473 0 9 11 0 0 0 1 41 1046 0 0 13380 32292
+// Fire reactive buffs when bot is being hit AND missing at least 1000 hp.
+IC_handle_damage_received :: proc(line: []string) {
+	if len(line) < 17 do return
+	if line[4] != bot.playerID do return
+	dmg := parse_str_int(line[13])
+	if dmg <= 0 do return
+	current_hp := parse_str_int(line[16])
+	max_hp := parse_str_int(line[17])
+	if max_hp - current_hp < 1000 do return
+	log_info(
+		fmt.tprintf(
+			"[IC] damage taken: -%d hp=%d/%d (missing %d)",
+			dmg,
+			current_hp,
+			max_hp,
+			max_hp - current_hp,
+		),
+	)
+	use_hp_potion()
+	if bot.playerID == HOLY_BUFFER_ID {
+		IC_cast_buffs(&ic_holy_damage_buffs, "damage")
 	}
 }
 
@@ -61,12 +135,18 @@ IC_handle_join :: proc(words: []string) {
 	state := &bot.state.(ICTimerState)
 	if words[2] == "#guri^506" {
 		//join ic
+		join_packet := "#guri^506"
+		add_packet_skill_que(1000, join_packet, true)
+		log_info("joining ic")
 		state.current_round = 0 //dmg
 		state.round_number = 0
 		state.activation_points = 0
 	}
 	if words[2] == "#guri^596" {
 		//join ascobas
+		join_packet := "#guri^596"
+		add_packet_skill_que(1000, join_packet, true)
+		log_info("joining asgobas")
 		state.current_round = 0 //dmg
 		state.round_number = 0
 		state.activation_points = 0

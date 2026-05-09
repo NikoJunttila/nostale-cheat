@@ -111,6 +111,10 @@ update_bot_sp_level :: proc() {
 
 bot_tick :: proc() {
 	if bot.mode == .PAUSED do return
+	#partial switch bot.mode {
+	case .IC_TIMER:
+		IC_tick()
+	}
 	if len(bot.skill_que) != 0 {
 		next := bot.skill_que[0]
 		if time.since(next.castTime) > 0 {
@@ -217,6 +221,11 @@ update_state :: proc() {
 		bot.state = DPS_state
 	case .IC_TIMER:
 		bot.state = ICTimerState{}
+		if bot.playerID == HOLY_BUFFER_ID {
+			log_important("[IC] HOLY buffer detected — periodic rotation + reactive heals enabled")
+		} else {
+			log_info("[IC] non-buffer character — round timing only")
+		}
 	case .PAUSED:
 	}
 }
