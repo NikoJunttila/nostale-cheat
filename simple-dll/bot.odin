@@ -8,6 +8,7 @@ import "core:time"
 BotState :: union {
 	DPSCheckState,
 	ICTimerState,
+	BoxSpammerState,
 	// MobGrindingState,
 	// IceFlowerState,
 }
@@ -18,6 +19,7 @@ Mode :: enum {
 	COOKING,
 	DPSCheck,
 	IC_TIMER,
+	BOX_SPAMMER,
 	BUFFING,
 	ICE_FLOWER,
 	MOB_GRINDING,
@@ -114,6 +116,8 @@ bot_tick :: proc() {
 	#partial switch bot.mode {
 	case .IC_TIMER:
 		IC_tick()
+	case .BOX_SPAMMER:
+		BoxSpammer_tick()
 	}
 	if len(bot.skill_que) != 0 {
 		next := bot.skill_que[0]
@@ -226,6 +230,11 @@ update_state :: proc() {
 		} else {
 			log_info("[IC] non-buffer character — round timing only")
 		}
+	case .BOX_SPAMMER:
+		bot.state = BoxSpammerState{}
+		log_important(
+			fmt.tprintf("[BOX] spamming slot %s every %dms", BOX_SLOT, BOX_SPAMMER_CD / time.Millisecond),
+		)
 	case .PAUSED:
 	}
 }
@@ -245,6 +254,8 @@ handle_packet :: proc(words: []string) {
 		handle_DPSCheck_packet(words)
 	case .IC_TIMER:
 		handle_ic_timer_packet(words)
+	case .BOX_SPAMMER:
+		handle_box_spammer_packet(words)
 	case .BUFFING:
 		handle_buff_packet(words)
 	case .COOKING:
@@ -266,7 +277,7 @@ handle_ice_flower_packet :: proc(words: []string) {
 // map changed, if fishing is due to admin
 handleC_map :: proc(words: []string) {
 	#partial switch bot.mode {
-	case .PAUSED, .DPSCheck, .IC_TIMER, .BUFFING:
+	case .PAUSED, .DPSCheck, .IC_TIMER, .BOX_SPAMMER, .BUFFING:
 		//to prevent double running this. 1 is new map, 0 is old map
 		if len(words) >= 4 && words[3] == "1" {
 			recv_packet_skill_que(1000, "tcrank 1")

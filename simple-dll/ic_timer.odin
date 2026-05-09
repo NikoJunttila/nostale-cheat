@@ -76,9 +76,10 @@ IC_tick :: proc() {
 hp_potion_last_use: time.Time
 HP_POTION_CD :: 500 * time.Millisecond
 
+// uses first item in potion inventory
 use_hp_potion :: proc() {
 	if !check_time(hp_potion_last_use, HP_POTION_CD) do return
-	packet := fmt.aprintf("u_i 1 %s 1 41 0 0", bot.playerID)
+	packet := fmt.aprintf("u_i 1 %s 1 0 0 0", bot.playerID)
 	send_packet(packet)
 	delete(packet)
 	hp_potion_last_use = time.now()

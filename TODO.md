@@ -1,3 +1,9 @@
+walk packet to safespot in ic
+
+zip injector + dll + sound + example.json + guide 
+
+take the main player id from json also instead of hardcoded in buffers
+
 /home/derp/docker/windows/shared/nostale-cheats/example-Nostale_Bot/NostaleClientX.CT
 
 FIND NEW OFFSETS for moblist and item list
@@ -49,6 +55,4 @@ count_base := debug_read_ptr("ent_count", 0xNEW_OFFSET, []uintptr{...new offsets
 The inner offsets (0xEA4, 0x5E4, etc.) might still be valid — only the static base addresses are confirmed broken. Try the old inner offsets first with the new base addresses.
 
 
-zip injector + dll + sound + example.json + guide 
 
-take the main player id from json also instead of hardcoded in buffers

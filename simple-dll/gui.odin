@@ -4,6 +4,7 @@ package payload
 import "base:runtime"
 import "core:fmt"
 import win "core:sys/windows"
+import "core:time"
 import mu "vendor:microui"
 
 // Global MicroUI Context for the GUI
@@ -66,6 +67,7 @@ mode_names := [Mode]string {
 	.COOKING      = "COOKING",
 	.DPSCheck     = "DPS Check",
 	.IC_TIMER     = "IC TIMER",
+	.BOX_SPAMMER  = "BOX SPAMMER",
 	.BUFFING      = "BUFFING",
 	.ICE_FLOWER   = "ICE FLOWER",
 	.MOB_GRINDING = "MOB GRINDING",
@@ -157,16 +159,7 @@ update_gui :: proc() {
 		mu.label(&gui_ctx, "Select Mode:")
 
 		// Mode buttons — two per row
-		modes := [?]Mode {
-			.PAUSED,
-			.FISHING,
-			.COOKING,
-			.DPSCheck,
-			.BUFFING,
-			.IC_TIMER,
-			// .ICE_FLOWER,
-			// .MOB_GRINDING,
-		}
+		modes := [?]Mode{.PAUSED, .FISHING, .COOKING, .DPSCheck, .BUFFING, .IC_TIMER, .BOX_SPAMMER}
 
 		for m in modes {
 			mu.layout_row(&gui_ctx, {-1}, 0)
@@ -225,6 +218,15 @@ update_gui :: proc() {
 				} else {
 					mu.label(&gui_ctx, "STATUS: Waiting for ic / asgobas")
 				}
+			}
+		case .BOX_SPAMMER:
+			if state, ok := bot.state.(BoxSpammerState); ok {
+				mu.label(&gui_ctx, fmt.tprintf("Slot: %s", BOX_SLOT))
+				mu.label(
+					&gui_ctx,
+					fmt.tprintf("Interval: %dms", BOX_SPAMMER_CD / time.Millisecond),
+				)
+				mu.label(&gui_ctx, fmt.tprintf("Opened: %d", state.sent))
 			}
 		case .MOB_GRINDING:
 			pos := get_player_pos()
