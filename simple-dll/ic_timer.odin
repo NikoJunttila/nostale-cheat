@@ -136,8 +136,10 @@ IC_handle_join :: proc(words: []string) {
 	state := &bot.state.(ICTimerState)
 	if words[2] == "#guri^506" {
 		//join ic
-		join_packet := "#guri^506"
-		add_packet_skill_que(1000, join_packet, true)
+		join_packet_1 := "guri 508" //opens the dialog
+		join_packet_2 := "#guri^506" // confirm joining
+		add_packet_skill_que(500, join_packet_1, true)
+		add_packet_skill_que(500, join_packet_2, true)
 		log_info("joining ic")
 		state.current_round = 0 //dmg
 		state.round_number = 0
