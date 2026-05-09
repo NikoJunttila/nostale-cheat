@@ -51,6 +51,4 @@ The inner offsets (0xEA4, 0x5E4, etc.) might still be valid — only the static 
 
 zip injector + dll + sound + example.json + guide 
 
-ts73 bot?
-
 take the main player id from json also instead of hardcoded in buffers

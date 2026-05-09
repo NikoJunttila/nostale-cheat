@@ -58,5 +58,3 @@ cp alert.wav /home/derp/.steam/steam/steamapps/compatdata/4240740151/pfx/drive_c
 
 This is a project written with odin for injecting nostale video game that is 32bit with a .dll file.
 This targets windows environment only but usually is ran in linux through proton.
-
-
