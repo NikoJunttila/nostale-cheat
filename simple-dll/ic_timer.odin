@@ -20,7 +20,25 @@ ICTimerState :: struct {
 	round_number:      int,
 	activation_points: int,
 	rewards_achieved:  bool,
-	asgobas_round:     bool,
+}
+
+sit_down_kid :: proc() {
+	sit_packet := fmt.tprintf("rest 3 1 %d", bot.playerID)
+	send_packet(sit_packet)
+}
+
+reset_ic :: proc() {
+	state := &bot.state.(ICTimerState)
+	state.round_number = 0
+	state.current_round = 0
+	state.total_dmg = 0
+	state.activation_points = 0
+	state.rewards_achieved = false
+}
+
+walk_safe_spot :: proc() {
+	walk_packet := "walk 35 68 1 16"
+	send_packet(walk_packet)
 }
 
 // IC holy-buffer skill lists. cast_buff_skills only fires entries whose CD is up,
@@ -69,6 +87,8 @@ IC_cast_buffs :: proc(skills: ^[]Skill, label: string) {
 // cast_buff_skills already gates each skill on its own CD, so calling this every tick is safe.
 IC_tick :: proc() {
 	if bot.playerID != HOLY_BUFFER_ID do return
+	state := &bot.state.(ICTimerState)
+	if state.round_number == 0 do return
 	IC_cast_buffs(&ic_holy_offcd_buffs, "off-cd")
 }
 
@@ -114,6 +134,7 @@ IC_handle_damage_received :: proc(line: []string) {
 
 IC_handle_msgi :: proc(words: []string) {
 	if words[2] == "384" {
+		walk_safe_spot()
 		state := &bot.state.(ICTimerState)
 		log_info(
 			fmt.tprintf(

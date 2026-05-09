@@ -226,14 +226,20 @@ update_state :: proc() {
 	case .IC_TIMER:
 		bot.state = ICTimerState{}
 		if bot.playerID == HOLY_BUFFER_ID {
-			log_important("[IC] HOLY buffer detected — periodic rotation + reactive heals enabled")
+			log_important(
+				"[IC] HOLY buffer detected — periodic rotation + reactive heals enabled",
+			)
 		} else {
 			log_info("[IC] non-buffer character — round timing only")
 		}
 	case .BOX_SPAMMER:
 		bot.state = BoxSpammerState{}
 		log_important(
-			fmt.tprintf("[BOX] spamming slot %s every %dms", BOX_SLOT, BOX_SPAMMER_CD / time.Millisecond),
+			fmt.tprintf(
+				"[BOX] spamming slot %s every %dms",
+				BOX_SLOT,
+				BOX_SPAMMER_CD / time.Millisecond,
+			),
 		)
 	case .PAUSED:
 	}
@@ -277,7 +283,7 @@ handle_ice_flower_packet :: proc(words: []string) {
 // map changed, if fishing is due to admin
 handleC_map :: proc(words: []string) {
 	#partial switch bot.mode {
-	case .PAUSED, .DPSCheck, .IC_TIMER, .BOX_SPAMMER, .BUFFING:
+	case .PAUSED, .DPSCheck, .BOX_SPAMMER, .BUFFING:
 		//to prevent double running this. 1 is new map, 0 is old map
 		if len(words) >= 4 && words[3] == "1" {
 			recv_packet_skill_que(1000, "tcrank 1")
@@ -287,6 +293,9 @@ handleC_map :: proc(words: []string) {
 		log_info("admin alert")
 		bot_pause()
 		alert("admin alert")
+	case .IC_TIMER:
+		reset_ic()
+		sit_down_kid()
 	}
 }
 
