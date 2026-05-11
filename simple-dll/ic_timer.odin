@@ -165,11 +165,14 @@ IC_handle_join :: proc(words: []string) {
 		add_packet_skill_que(500, join_packet_1, true)
 		add_packet_skill_que(500, join_packet_2, true)
 		log_info("joining ic")
+		return
 	}
 	if words[2] == "#guri^596" {
-		// TODO figure out the first packet
-		join_packet := "#guri^596"
-		add_packet_skill_que(1000, join_packet, true)
+		// guri 598;;   #guri^596
+		join_packet_1 := "guri 598" //opens the dialog
+		join_packet_2 := "#guri^596"
+		add_packet_skill_que(5000, join_packet_1, true)
+		add_packet_skill_que(5000, join_packet_2, true)
 		log_info("joining asgobas")
 		state := &bot.state.(ICTimerState)
 		state.asgobas_event = true
