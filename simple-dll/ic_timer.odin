@@ -31,7 +31,7 @@ sit_down_kid :: proc() {
 
 reset_ic :: proc() {
 	state := &bot.state.(ICTimerState)
-	state = ICTimerState{}
+	state = &ICTimerState{}
 }
 
 walk_safe_spot :: proc() {
@@ -171,9 +171,10 @@ IC_handle_join :: proc(words: []string) {
 		// guri 598;;   #guri^596
 		join_packet_1 := "guri 598" //opens the dialog
 		join_packet_2 := "#guri^596"
-		add_packet_skill_que(5000, join_packet_1, true)
-		add_packet_skill_que(5000, join_packet_2, true)
-		log_info("joining asgobas")
+		add_packet_skill_que(500, join_packet_1, true)
+		log_info("joining asgobas first packet")
+		add_packet_skill_que(500, join_packet_2, true)
+		log_info("joining asgobas second packet")
 		state := &bot.state.(ICTimerState)
 		state.asgobas_event = true
 		// qnamli 51 #guri^596 2547 0 0 0 //asgobas join icon
