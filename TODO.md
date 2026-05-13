@@ -1,10 +1,3 @@
-walk packet to safespot in ic
-walks user. only other people see user walking but not us.
-send: walk 35 14 1 12
-walk 35 68 1 16 // actual IC spot
-send client side to show where we are
-receive: tp 1 8141324 46 7 0
-
 ---------------------------------------------------------------------------------
 
 zip injector + dll + sound + example.json + guide. when making this possible for other to use also

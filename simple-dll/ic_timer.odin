@@ -15,7 +15,6 @@ IC 80-99: its 150, so 150, 450, 900, 1500
 IC_80_99 :: 150
 
 ICTimerState :: struct {
-	total_dmg:         i32,
 	current_round:     i32, //damage
 	round_number:      int,
 	activation_points: int,
@@ -77,7 +76,6 @@ IC_cast_buffs :: proc(skills: ^[]Skill, label: string) {
 		if check_time(s.last_cast, s.cd) {
 			buf_skill_que(2200, s.key, s.target)
 			s.last_cast = time.now()
-			log_info(fmt.tprintf("[IC HOLY] %s buff key=%s queued", label, s.key))
 		}
 	}
 }
@@ -117,15 +115,6 @@ IC_handle_damage_received :: proc(line: []string) {
 	current_hp := parse_str_int(line[16])
 	max_hp := parse_str_int(line[17])
 	if max_hp - current_hp < 1000 do return
-	// log_info(
-	// 	fmt.tprintf(
-	// 		"[IC] damage taken: -%d hp=%d/%d (missing %d)",
-	// 		dmg,
-	// 		current_hp,
-	// 		max_hp,
-	// 		max_hp - current_hp,
-	// 	),
-	// )
 	use_hp_potion()
 	if bot.playerID == HOLY_BUFFER_ID {
 		IC_cast_buffs(&ic_holy_damage_buffs, "damage")

@@ -295,6 +295,7 @@ handleC_map :: proc(words: []string) {
 		alert("admin alert")
 	case .IC_TIMER:
 		state := &bot.state.(ICTimerState)
+		if state.round_number == 0 do return
 		if state.round_number < 5 {
 			log_important(
 				fmt.tprintf(
@@ -317,6 +318,8 @@ handleC_map :: proc(words: []string) {
 				),
 			)
 		}
+		bot.currentDelay = 0
+		reset_skill_que()
 		reset_ic()
 		sit_down_kid()
 	}
