@@ -258,6 +258,10 @@ update_gui :: proc() {
 		if .SUBMIT in mu.button(&gui_ctx, "Asgobas Timer") {
 			asgobas_timer()
 		}
+		if .SUBMIT in mu.button(&gui_ctx, "Reveal (tcrank 1)") {
+			recv_packet_skill_que(1000, "tcrank 1")
+			log_info("manual reveal with tcrank 1")
+		}
 
 		mu.end_window(&gui_ctx)
 	}

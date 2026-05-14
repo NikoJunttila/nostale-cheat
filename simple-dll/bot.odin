@@ -287,7 +287,7 @@ handleC_map :: proc(words: []string) {
 		//to prevent double running this. 1 is new map, 0 is old map
 		if len(words) >= 4 && words[3] == "1" {
 			recv_packet_skill_que(1000, "tcrank 1")
-			fmt.println("Map change!!!")
+			log_info("map change, revealin with tcrank 1")
 		}
 	case .FISHING, .ICE_FLOWER, .MOB_GRINDING:
 		log_info("admin alert")
