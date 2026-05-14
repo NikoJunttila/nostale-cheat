@@ -23,14 +23,17 @@ ICTimerState :: struct {
 }
 
 sit_down_kid :: proc() {
-	sit_packet := fmt.tprintf("rest 3 1 %d", bot.playerID)
+	sit_packet := fmt.tprintf("rest 3 1 %s", bot.playerID)
 	log_info("sit down kid")
 	send_packet(sit_packet)
 }
 
 reset_ic :: proc() {
 	state := &bot.state.(ICTimerState)
-	state = &ICTimerState{}
+	state^ = ICTimerState{}
+	for &s in ic_holy_offcd_buffs do s.last_cast = {}
+	for &s in ic_holy_damage_buffs do s.last_cast = {}
+	hp_potion_last_use = {}
 }
 
 walk_safe_spot :: proc() {
@@ -85,7 +88,7 @@ IC_cast_buffs :: proc(skills: ^[]Skill, label: string) {
 IC_tick :: proc() {
 	if bot.playerID != HOLY_BUFFER_ID do return
 	state := &bot.state.(ICTimerState)
-	if state.round_number == 0 do return
+	if state.round_number == 0 || state.round_number == 5 do return
 	IC_cast_buffs(&ic_holy_offcd_buffs, "off-cd")
 }
 
@@ -106,7 +109,7 @@ use_hp_potion :: proc() {
 // su 3 41003 1 355473 0 9 11 0 0 0 1 41 1046 0 0 13380 32292
 // Fire reactive buffs when bot is being hit AND missing at least 1000 hp.
 IC_handle_damage_received :: proc(line: []string) {
-	if len(line) < 17 do return
+	if len(line) < 18 do return
 	if line[4] != bot.playerID do return
 	state := &bot.state.(ICTimerState)
 	if state.asgobas_event do return
@@ -177,7 +180,7 @@ IC_handle_su :: proc(line: []string) {
 	id := line[2]
 	dmg_str := line[13]
 	dmg := parse_str_int(dmg_str)
-	if state.current_round > 0 && id == bot.playerID {
+	if state.round_number > 0 && id == bot.playerID {
 		state.current_round += dmg
 		state.activation_points += int(dmg) / (2 * bot.level)
 		needed_activation := IC_80_99 * (state.round_number * 3)

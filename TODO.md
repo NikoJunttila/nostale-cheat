@@ -1,3 +1,9 @@
+dps for ic rewards is broken, works for dps mode. double check this if there is easy fix.
+
+----------------------------------------------
+
+healing bot problems after ic ends
+
 ---------------------------------------------------------------------------------
 
 zip injector + dll + sound + example.json + guide. when making this possible for other to use also
