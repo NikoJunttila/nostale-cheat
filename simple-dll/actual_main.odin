@@ -27,7 +27,6 @@ actual_main :: proc() {
 	init_bot()
 	thread.create_and_start(start_gui)
 	asgobas_timer()
-	recv_packet("tcrank 1")
 	for {
 
 		packet_queue_tick()

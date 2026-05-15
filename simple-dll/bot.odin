@@ -284,11 +284,12 @@ handle_ice_flower_packet :: proc(words: []string) {
 handleC_map :: proc(words: []string) {
 	#partial switch bot.mode {
 	case .PAUSED, .DPSCheck, .BOX_SPAMMER, .BUFFING:
-		//to prevent double running this. 1 is new map, 0 is old map
-		if len(words) >= 4 && words[3] == "1" {
-			recv_packet_skill_que(1000, "tcrank 1")
-			log_info("map change, revealin with tcrank 1")
-		}
+	//to prevent double running this. 1 is new map, 0 is old map
+	// this was getting spammed for some reason?
+	// if len(words) >= 4 && words[3] == "1" {
+	// 	recv_packet_skill_que(1000, "tcrank 1")
+	// 	log_info("map change, revealin with tcrank 1")
+	// }
 	case .FISHING, .ICE_FLOWER, .MOB_GRINDING:
 		log_info("admin alert")
 		bot_pause()
