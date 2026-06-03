@@ -31,3 +31,8 @@ tasks:
     cmds:
     - tail -f /home/derp/.local/share/Steam/steamapps/common/NosTale/payload_debug.log
 
+  all:
+    desc: inject all
+    deps: [main steam]
+    cmds:
+      - echo "all injected"
