@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# nostale-tile — find ALL NosTale game windows and make them tile like normal windows.
+#
+# NosTale grabs fullscreen on launch, so the windows can't share a workspace. Run this
+# whenever you want them tiled into the normal layout (several fit on one workspace, in
+# squares, like a browser/terminal). It clears any fullscreen/maximize state and forces
+# tiling, then restores your previous focus and workspace.
+#
+# Re-run it any time (e.g. after launching a new game). Safe to run when nothing matches.
+set -euo pipefail
+
+command -v hyprctl >/dev/null 2>&1 || { echo "nostale-tile: hyprctl not found (is Hyprland running?)" >&2; exit 1; }
+command -v jq      >/dev/null 2>&1 || { echo "nostale-tile: jq is required" >&2; exit 1; }
+
+# Target Steam game windows titled exactly "NosTale". The class guard avoids false
+# positives like a terminal whose path contains "nostale". Adjust the jq filter if your
+# game windows use a different class/title.
+mapfile -t addrs < <(
+  hyprctl clients -j \
+    | jq -r '.[] | select((.class | startswith("steam_app")) and (.title == "NosTale")) | .address'
+)
+
+if [ "${#addrs[@]}" -eq 0 ]; then
+  echo "nostale-tile: no NosTale windows found."
+  exit 0
+fi
+
+# Remember current focus so we can return after touching each game window.
+orig=$(hyprctl activewindow -j | jq -r '.address // empty')
+
+# Build one batch to minimise focus/workspace flicker. For each window:
+#   focuswindow      -> dispatchers act on the focused window
+#   fullscreenstate 0 0 -> set internal+client fullscreen to NONE (deterministic;
+#                          NOTE: `fullscreen 0` would TOGGLE, which is wrong here)
+#   settiled         -> force it into the tiling layout (overrides floating)
+batch=""
+for addr in "${addrs[@]}"; do
+  batch+="dispatch focuswindow address:$addr ; dispatch fullscreenstate 0 0 ; dispatch settiled ; "
+done
+[ -n "$orig" ] && batch+="dispatch focuswindow address:$orig ; "
+
+hyprctl --batch "$batch" >/dev/null
+
+echo "nostale-tile: tiled ${#addrs[@]} NosTale window(s)."
