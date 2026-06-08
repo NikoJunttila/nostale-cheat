@@ -33,6 +33,6 @@ tasks:
 
   all:
     desc: inject all
-    deps: [main steam]
+    deps: [main, steam]
     cmds:
       - echo "all injected"
