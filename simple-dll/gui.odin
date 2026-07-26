@@ -186,8 +186,11 @@ update_gui :: proc() {
 
 		#partial switch bot.mode {
 		case .FISHING:
-			info := fmt.tprintf("Fish Caught: %d", fish_caught)
+			info := fmt.tprintf("Fish Caught: %d, leg %d", fish_caught, legendary_fish_caught)
 			mu.label(&gui_ctx, info)
+			if stuck_resets > 0 {
+				mu.label(&gui_ctx, fmt.tprintf("Stuck resets: %d", stuck_resets))
+			}
 			if outOfBaits {
 				mu.label(&gui_ctx, "STATUS: OUT OF BAITS")
 			} else {

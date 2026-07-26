@@ -1,4 +1,6 @@
+healing bot crashesh after IC sometimes. try to fix it
 
+---------------------------------------------
 zip injector + dll + sound + example.json + guide. when making this possible for other to use also
 
 ---------------------------------------------------------------------------

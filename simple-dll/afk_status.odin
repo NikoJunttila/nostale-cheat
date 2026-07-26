@@ -19,6 +19,7 @@ check_afk :: proc() {
 		small_check := time.Second * 20
 		if check_time(bot.last_activity, small_check) {
 			reset_skill_que()
+			fish_note_afk_reset()
 			fish_startFishing()
 		}
 	case .PAUSED, .DPSCheck:

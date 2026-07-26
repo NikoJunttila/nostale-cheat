@@ -167,16 +167,6 @@ castSkill :: proc(skillID: string) {
 	delete(skill_packet)
 }
 
-bot_afk_check :: proc() {
-	if bot.mode == .PAUSED do return
-	since_last_action := time.since(bot.last_activity)
-	if since_last_action < time.Minute * 5 do return
-	#partial switch bot.mode {
-	case .FISHING:
-		fish_reset_skills()
-		castSkill("1")
-	}
-}
 
 add_bot_skill_que :: proc(waitMS: int, skill: string, important := false) {
 	delay := time.Duration(waitMS) * time.Millisecond + time.Duration(iteration)
@@ -213,6 +203,8 @@ update_state :: proc() {
 	bot.last_activity = time.now()
 	#partial switch bot.mode {
 	case .FISHING:
+		stuck_resets = 0
+		stuck_last_fish = fish_caught
 		expBuff.ready = true
 		maintainLineBuff.ready = true
 		baitSkill.ready = true

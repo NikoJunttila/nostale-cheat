@@ -35,6 +35,32 @@ proCastLine := Skill {
 
 outOfBaits := false
 fish_caught := 0
+legendary_fish_caught := 0
+
+STUCK_RESET_ALERT_THRESHOLD :: 2 // consecutive AFK resets w/ no fish before alerting
+stuck_resets := 0
+stuck_last_fish := 0
+
+// Called on each fishing AFK reset. Tracks consecutive resets during which no new
+// fish was caught and alerts when the bot looks genuinely stuck (needs a manual nudge).
+fish_note_afk_reset :: proc() {
+	if fish_caught > stuck_last_fish {
+		stuck_resets = 0 // progress since last reset — not stuck
+	} else {
+		stuck_resets += 1
+	}
+	stuck_last_fish = fish_caught
+
+	if stuck_resets >= STUCK_RESET_ALERT_THRESHOLD {
+		msg := fmt.tprintf(
+			"fishing stuck: %d resets, no fish caught — nudge the account",
+			stuck_resets,
+		)
+		log_warn(msg)
+		alert(msg) // MessageBox + alert.wav; blocks loop until dismissed
+		stuck_resets = 0 // re-arm after the user acknowledges
+	}
+}
 
 
 // Fishing mode packet handler
@@ -73,6 +99,7 @@ fish_handleGURI :: proc(line: []string) {
 		fish_startFishing()
 	case "31":
 		fish_caught += 1
+		legendary_fish_caught += 1
 		log_info(fmt.tprintf("fish: %d legendary fish!!", fish_caught))
 		add_bot_skill_que(200, "2")
 		fish_startFishing()
